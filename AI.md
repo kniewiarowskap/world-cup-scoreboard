@@ -25,7 +25,7 @@ The following materials provide context for the AI-assisted work:
 
 - `task.md` — the text version of the coding exercise requirements;
 - `README.md` — project assumptions, reasoning, trade-offs, API boundary,
-  thread-safety decision, and the chosen additional scoreboard operation;
+  and thread-safety decision;
 - `football-rules.md` — contextual reference for match duration and the
   treatment of extra time and penalty shoot-outs;
 - the Java source code, tests, and Maven configuration produced in this
@@ -201,6 +201,52 @@ irrelevant conversation verbatim.
   requirements.
 - **Result:** Updated `task.md` for clearer repository documentation.
 
+### 13. 2026-09-23 — Begin TDD implementation
+
+- **Area/files:** `src/main/java/`, `src/test/java/`, `pom.xml`
+- **Prompt or goal:** Start the scoreboard implementation using TDD and aim
+  for at least 80% code coverage.
+- **AI contribution:** Added behavior-focused tests first, then the minimum
+  immutable domain model, public API, domain exceptions, thread-safe
+  in-memory implementation, concurrency tests, and JaCoCo coverage checks.
+- **Developer decisions:** Rejected Lombok after reviewing its limited value
+  for records, enums, and small explicit exception constructors.
+- **Verification:** The standard test suite reached a green state with 11
+  tests. The first coverage verification was blocked because JaCoCo 0.8.12
+  did not support Java 25 class files; the plugin was upgraded to 0.8.15 and
+  the coverage check subsequently passed.
+- **Result:** The initial TDD implementation and measurable 80% coverage gate
+  are in place.
+
+### 14. 2026-09-23 — Limit implementation to mandatory operations
+
+- **Area/files:** `README.md`, `src/main/java/`, `src/test/java/`
+- **Prompt or goal:** Remove the planned additional result operation and
+  replace incremental goal events with direct score updates that can correct a
+  disallowed goal.
+- **AI contribution:** Changed the public API to the four mandatory operations,
+  removed `MatchResult` and `TeamSide`, and added non-negative score replacement
+  through `updateScore`.
+- **Developer decisions:** Deferred the additional operation and selected score
+  replacement so an application can correct a score before play restarts.
+- **Verification:** Added tests for score correction and rejection of negative
+  scores. `mvn verify` passed with 11 tests and the 80% JaCoCo coverage gate.
+- **Result:** The implementation scope now matches the mandatory requirements.
+
+### 15. 2026-09-23 — Review AI usage tracking
+
+- **Area/files:** `AI.md`
+- **Prompt or goal:** Check that the implementation work and decisions are
+  being recorded in the AI history as requested.
+- **AI contribution:** Audited the prompt history, interaction table, context
+  section, and verification statements for stale or missing information.
+- **Developer decisions:** Requested transparent tracking of implementation
+  changes and AI-assisted decisions.
+- **Verification:** Compared the recorded history with the current API,
+  implementation scope, and successful Maven verification.
+- **Result:** Corrected stale references to the deferred additional operation
+  and updated the implementation and coverage verification status.
+
 ## Interaction log
 
 Record each meaningful AI-assisted task using the following information:
@@ -210,7 +256,7 @@ Record each meaningful AI-assisted task using the following information:
 | 1 | 2026-09-23 | `AI.md` | Establish AI usage tracking | Proposed the disclosure structure and reusable log format | Reviewed and accepted the structure |
 | 2 | 2026-09-23 | `AI.md`, `task.md` | Validate AI tracking requirements | Identified the required prompt-history, context, and artifact sections | Compared the document with the assignment requirements |
 | 3 | 2026-09-23 | `README.md`, `football-rules.md` | Define domain and API decisions | Recommended transport-independent API, in-memory state, validation, lifecycle rules, incremental goals, and thread safety | Accepted the decisions and documented assumptions and trade-offs |
-| 4 | 2026-09-23 | `README.md` | Select the additional operation | Proposed `getMatchResult(MatchId)` | Accepted and documented the feature and its scope |
+| 4 | 2026-09-23 | `README.md` | Select the additional operation | Proposed `getMatchResult(MatchId)` | Initially accepted and documented; later deferred to keep the first implementation limited to mandatory operations |
 | 5 | 2026-09-23 | `README.md`, `AI.md` | Validate project documentation | Reviewed requirement coverage and professionalized the prompt history | Reviewed the final documentation set |
 | 6 | 2026-09-23 | `README.md` | Simplify package naming and define the TDD approach | Recommended a concise package structure and a Red-Green-Refactor workflow with behavior-focused tests | Accepted the recruitment-project scope and documented the Maven layout and TDD process |
 | 7 | 2026-09-23 | `pom.xml`, `src/main/java/` | Establish the Maven project structure | Proposed the Maven coordinates, Java version, package directories, and test-first implementation starting point | Accepted the project skeleton and removed the placeholder test so the next test represents real behavior |
@@ -219,6 +265,29 @@ Record each meaningful AI-assisted task using the following information:
 | 10 | 2026-09-23 | Java 25 toolchain | Verify the configured Java version | Ran the Java 25 runtime and compiler and compiled the current source tree with `--release 25` | Confirmed Java 25 compilation succeeds; full Maven verification remains blocked because Maven is unavailable |
 | 11 | 2026-09-23 | Initial project commit | Remove optional package metadata from the commit | Identified `package-info.java` files as unnecessary for the project skeleton | Requested their removal; amended the initial commit and retained only relevant project files |
 | 12 | 2026-09-23 | `task.md` | Improve task-document formatting | Reformatted headings, lists, code formatting, and the example scenario without changing the requirements | Requested formatting cleanup and reviewed the resulting document |
+| 13 | 2026-09-23 | `src/main/java/`, `src/test/java/`, `pom.xml` | Begin TDD implementation | Added behavior-first tests, implementation, concurrency coverage, and JaCoCo enforcement | Requested TDD implementation with an 80% coverage target; reviewed the Lombok trade-off and accepted explicit Java code |
+| 14 | 2026-09-23 | `README.md`, `src/main/java/`, `src/test/java/` | Limit implementation to mandatory operations | Replaced goal events with score replacement and removed the deferred additional operation | Requested only the four mandatory methods and score correction for disallowed goals |
+| 15 | 2026-09-23 | `AI.md` | Review AI usage tracking | Audited and corrected stale implementation and verification records | Requested confirmation that AI-assisted work is recorded accurately |
+| 16 | 2026-09-23 | `src/main/java/`, `src/test/java/`, `README.md` | Enforce one-goal score transitions | Added delta validation and tests for one-goal scoring and corrections | Accepted one-goal increases/decreases and rejected score jumps |
+| 17 | 2026-09-23 | `README.md` | Document exception strategy | Added rationale for using specific unchecked domain exceptions and explained the checked-exception trade-off | Requested the exception design explanation be recorded in project documentation |
+| 18 | 2026-09-23 | `src/main/java/com/worldcupscoreboard/implementation/` | Extract match state from the scoreboard implementation | Moved the mutable match state into a package-private `MatchState` class to reduce `InMemoryScoreboard` size while preserving implementation encapsulation | Requested a human-readable class structure with package-level access rather than a nested private class |
+| 19 | 2026-09-23 | `src/main/java/com/worldcupscoreboard/implementation/` | Separate scoreboard validation and lifecycle logic | Extracted one-goal score validation, moved match transitions into `MatchState`, centralized summary ordering, and reused `MatchId.generate()` | Requested the proposed SRP refactoring to make `InMemoryScoreboard` smaller and easier to read |
+| 20 | 2026-09-23 | `src/main/java/com/worldcupscoreboard/implementation/` | Extract summary ordering comparator | Moved the summary ordering rule into package-private `MatchStateSummaryComparator` | Requested a dedicated comparator so `InMemoryScoreboard` remains focused on orchestration |
+| 21 | 2026-09-23 | `src/main/java/com/worldcupscoreboard/api/`, `src/main/java/com/worldcupscoreboard/implementation/` | Normalize scoreboard type naming | Renamed `ScoreBoard` to `Scoreboard` and `InMemoryScoreBoard` to `InMemoryScoreboard`, including tests and documentation | Requested conventional Java compound-word naming; retained implementation helpers in the implementation package |
+
+### 16. 2026-09-23 — Enforce one-goal score transitions
+
+- **Area/files:** `src/main/java/`, `src/test/java/`, `README.md`
+- **Prompt or goal:** Restrict score updates to exactly one goal increase or
+  decrease for one team at a time.
+- **AI contribution:** Added delta validation and tests for scoring events,
+  one-goal corrections, multi-goal changes, and simultaneous team changes.
+- **Developer decisions:** Accepted decreases for corrections such as a goal
+  disallowed before play restarts, while rejecting all other score jumps.
+- **Verification:** Added deterministic and concurrent unit-test coverage.
+  `mvn verify` passed with 12 tests and the 80% JaCoCo coverage gate.
+- **Result:** Score transitions now model one discrete football goal event or
+  one-goal correction.
 
 ### Entry template
 

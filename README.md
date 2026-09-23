@@ -22,22 +22,21 @@ world-cup-scoreboard/
 ├── src/
 │   ├── main/java/com/worldcupscoreboard/
 │   │   ├── api/
-│   │   │   └── ScoreBoard.java
+│   │   │   └── Scoreboard.java
 │   │   ├── model/
 │   │   │   ├── MatchId.java
-│   │   │   ├── MatchResult.java
 │   │   │   ├── MatchStatus.java
 │   │   │   ├── MatchSummary.java
 │   │   │   ├── Score.java
-│   │   │   └── TeamSide.java
+│   │   │   └── ...
 │   │   ├── implementation/
-│   │   │   └── InMemoryScoreBoard.java
+│   │   │   └── InMemoryScoreboard.java
 │   │   └── exception/
 │   │       └── ...
 │   └── test/java/com/worldcupscoreboard/
 │       ├── implementation/
-│       │   ├── InMemoryScoreBoardTest.java
-│       │   └── InMemoryScoreBoardConcurrencyTest.java
+│       │   ├── InMemoryScoreboardTest.java
+│       │   └── InMemoryScoreboardConcurrencyTest.java
 │       └── model/
 │           └── ScoreTest.java
 ```
@@ -62,8 +61,8 @@ The summary is ordered by:
 1. total score, descending;
 2. most recently started match first when total scores are tied.
 
-The implementation also provides exactly one additional operation:
-`getMatchResult`, which returns the result of a finished match.
+The implementation initially contains only the four mandatory operations.
+Additional operations will be considered in a later change.
 
 The expected summary ordering is illustrated by the following matches:
 
@@ -96,18 +95,17 @@ The intended public operations are:
 ```java
 MatchId startMatch(String homeTeam, String awayTeam);
 
-void addGoal(MatchId matchId, TeamSide teamSide);
+void updateScore(MatchId matchId, int homeScore, int awayScore);
 
 void finishMatch(MatchId matchId);
 
 List<MatchSummary> getSummary();
 
-MatchResult getMatchResult(MatchId matchId);
 ```
 
-`MatchId`, `TeamSide`, `MatchSummary`, and `MatchResult` are domain types. The API
-uses a generated match ID instead of team names because the same teams may
-play again after an earlier match has finished.
+`MatchId`, `MatchSummary`, and `Score` are domain types. The API uses a generated
+match ID instead of team names because the same teams may play again after an
+earlier match has finished.
 
 ## Assumptions and domain rules
 
@@ -119,20 +117,39 @@ play again after an earlier match has finished.
 - A generated `MatchId` uniquely identifies a match.
 - Unknown match IDs cause a domain exception.
 - A match has the lifecycle `IN_PROGRESS` followed by `FINISHED`.
-- Goals can be added only while a match is in progress.
+- Scores can be updated only while a match is in progress.
 - A finished match cannot be updated or finished again.
-- Each score operation adds exactly one goal to the selected team.
-- Scores cannot become negative because arbitrary score replacement is not
-  supported.
+- Each score update must change exactly one team's regular score by exactly one
+  goal, either increasing it or decreasing it. Decreases represent corrections
+  such as a goal disallowed before play restarts.
 - A summary contains only matches that are currently in progress.
 - Summary results and domain snapshots are immutable.
 
-The incremental goal operation models football scoring as discrete goal events:
+## Exception handling
+
+Domain failures are represented by specific unchecked exceptions:
+`InvalidMatchException`, `MatchNotFoundException`,
+`TeamAlreadyPlayingException`, and `InvalidMatchStateException`.
+
+These failures indicate invalid input or a violated scoreboard lifecycle
+contract, similar to `IllegalArgumentException` and `IllegalStateException`
+in the Java standard library. Callers should validate inputs and correct their
+workflow rather than being forced to catch an exception for every scoreboard
+operation. Using unchecked exceptions also keeps the public interface concise
+and avoids coupling consumers to checked `throws` declarations.
+
+Checked exceptions would be appropriate if these failures were expected
+recoverable business outcomes that every caller had to handle explicitly. For
+this in-memory library, specific runtime exceptions provide clear failure
+types without adding that obligation.
+
+The score update operation supports one-goal events and corrections to the
+current regular score:
 
 ```text
 initial score: 0 - 0
-add a home goal: 1 - 0
-add an away goal: 1 - 1
+goal scored: 1 - 0
+goal disallowed: 0 - 0
 ```
 
 The library does not model the complete Laws of the Game. In particular, it
@@ -153,9 +170,9 @@ application may place the library behind a REST controller, Kafka consumer,
 scheduled job, or another adapter without coupling the scoreboard domain to
 that transport.
 
-Finished matches are retained with `FINISHED` status so that
-`getMatchResult` can be called after a match ends. Finished matches are excluded
-from the active summary.
+Finished matches are retained with `FINISHED` status and excluded from the
+active summary. Administrative forfeits and post-match disciplinary decisions
+are outside the current four-operation API.
 
 ## Thread safety
 
@@ -172,28 +189,6 @@ invariants.
 Thread safety does not provide persistence or distributed coordination between
 separate scoreboard instances.
 
-## Additional operation: match result
-
-The additional operation is:
-
-```java
-MatchResult getMatchResult(MatchId matchId);
-```
-
-It returns:
-
-- `HOME_WIN` when the home team has more goals;
-- `AWAY_WIN` when the away team has more goals;
-- `DRAW` when both teams have the same score.
-
-The operation is available only for a finished match. It does not determine a
-winner from a penalty shoot-out because penalty shoot-outs are outside the
-regular match score model.
-
-This feature was selected because it is a useful football-domain operation,
-requires finished-match state to be retained, and adds clear value without
-introducing an unnecessary time engine or external infrastructure.
-
 ## Reasoning and trade-offs
 
 ### In-memory state versus a database
@@ -209,11 +204,12 @@ Generated IDs prevent ambiguity when teams play more than once. Team names are
 still stored as display data and used for participation validation, but they
 are not match identity.
 
-### Incremental goals versus score replacement
+### Score replacement versus incremental goals
 
-Adding one goal per operation reflects football scoring and prevents invalid
-negative or arbitrary score changes. The trade-off is that callers cannot
-replace a complete score in one call; they must submit individual goal events.
+Replacing the regular score allows a consuming application to correct a goal
+that is disallowed before play restarts, while still rejecting negative scores.
+The trade-off is that the library does not record the goal event history or
+reason for a correction.
 
 ### Single lock versus unsynchronized access
 
@@ -240,7 +236,7 @@ Each behavior should follow the cycle:
 3. **Refactor:** improve names, structure, and duplication while keeping all
    tests passing.
 
-Start with the public `ScoreBoard` behavior rather than internal collections.
+Start with the public `Scoreboard` behavior rather than internal collections.
 Use a small test increment for each rule, then refactor shared validation or
 snapshot logic only when duplication appears. Keep concurrency tests separate
 from deterministic behavior tests and run them after the basic implementation
