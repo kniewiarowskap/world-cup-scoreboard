@@ -24,7 +24,6 @@ adapted where necessary, and validated with the project's available checks.
 The following materials provide context for the AI-assisted work:
 
 - `task.md` — the text version of the coding exercise requirements;
-- `ODDS and Data - JAVA Coding Task.pdf` — the original assignment document;
 - `README.md` — project assumptions, reasoning, trade-offs, API boundary,
   thread-safety decision, and the chosen additional scoreboard operation;
 - `football-rules.md` — contextual reference for match duration and the
@@ -176,6 +175,32 @@ irrelevant conversation verbatim.
 - **Result:** Confirmed that the current sources compile successfully with
   Java 25.
 
+### 11. 2026-09-23 — Remove non-source artifacts from the initial commit
+
+- **Prompt/goal:** Remove unnecessary package metadata files from the initial
+  project commit, then verify the remaining structure.
+- **AI contribution:** Identified the package metadata files as optional for the
+  implementation skeleton and amended the commit to retain only relevant
+  project files.
+- **Developer decision:** Requested removal of the package metadata files.
+- **Verification:** Reviewed the amended commit and confirmed that the
+  documentation, Maven configuration, and ignore rules remain included.
+- **Result:** The initial commit now contains the project documentation and
+  Maven configuration without the optional package metadata.
+
+### 12. 2026-09-23 — Improve task-document formatting
+
+- **Prompt/goal:** Improve the formatting of `task.md` while preserving all
+  assignment requirements.
+- **AI contribution:** Converted plain text sections into Markdown headings,
+  formatted lists and code references, and clarified the example scenario
+  layout without changing its meaning.
+- **Developer decision:** Requested formatting cleanup and reviewed the
+  resulting document.
+- **Verification:** Compared the reformatted document with the original
+  requirements.
+- **Result:** Updated `task.md` for clearer repository documentation.
+
 ## Interaction log
 
 Record each meaningful AI-assisted task using the following information:
@@ -192,6 +217,8 @@ Record each meaningful AI-assisted task using the following information:
 | 8 | 2026-09-23 | `pom.xml` | Set the project Java version | Updated the Maven compiler release from Java 17 to Java 25 | Requested Java 25 and accepted the configuration change; local verification is pending a Java 25/Maven environment |
 | 9 | 2026-09-23 | `AI.md`, `.gitignore` | Audit AI tracking and generated project files | Checked that documented AI contributions cover the assignment and identified generated Maven output and the current Java environment mismatch | Reviewed the audit and accepted ignoring `target/`; Java 25 configuration remains in `pom.xml` |
 | 10 | 2026-09-23 | Java 25 toolchain | Verify the configured Java version | Ran the Java 25 runtime and compiler and compiled the current source tree with `--release 25` | Confirmed Java 25 compilation succeeds; full Maven verification remains blocked because Maven is unavailable |
+| 11 | 2026-09-23 | Initial project commit | Remove optional package metadata from the commit | Identified `package-info.java` files as unnecessary for the project skeleton | Requested their removal; amended the initial commit and retained only relevant project files |
+| 12 | 2026-09-23 | `task.md` | Improve task-document formatting | Reformatted headings, lists, code formatting, and the example scenario without changing the requirements | Requested formatting cleanup and reviewed the resulting document |
 
 ### Entry template
 
