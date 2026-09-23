@@ -23,7 +23,9 @@ current repository changes.
    `refactor`, or `chore`.
 6. Keep the subject action-oriented and concise. Add a short body with one to
    three bullets when it clarifies the change.
-7. Stage only the relevant files, then create the commit with this exact
+7. Stage only the relevant files. Before creating the commit, inspect the
+   staged file list and staged diff and compare them with the intended file
+   list. Unstage any unrelated files before creating the commit with this exact
    trailer:
 
    ```

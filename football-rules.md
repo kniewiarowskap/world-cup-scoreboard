@@ -5,11 +5,11 @@ Here is the English translation of the official football (soccer) match rules ac
 * Regulation Time: A standard professional football match lasts 90 minutes, split into two equal halves of 45 minutes. [1, 2]
 * Half-Time Interval: Players are entitled to a rest period between halves that cannot exceed 15 minutes. [2]
 * Stoppage Time (Allowance for Time Lost): At the end of each half, the referee adds extra minutes to compensate for time lost due to substitutions, player injuries, goal celebrations, or VAR reviews. [1, 2, 3]
-* Extra Time: In knockout tournament phases where a winner must be determined, a 30-minute extra time period is played if the score is tied after 90 minutes. This is split into two 15-minute halves. [4, 5]
+* Extra Time: In competitions whose regulations require a winner, a tied match may go to extra time. Extra time can consist of two periods of up to 15 minutes each. [3, 4]
 *
 
-## 2. Sposób Wyświetlania / How Results are Displayed After Penalties (Law 10)
-If the match remains tied after extra time, a penalty shoot-out (rzuty karne) is used to break the tie. Officially, the results are handled and displayed as follows: [5, 6]
+## 2. How Results are Displayed After Penalties (Law 10)
+If the competition regulations require a winner and the match remains tied after any required extra time, a penalty shoot-out (rzuty karne) may be used to break the tie. Officially, the results are handled and displayed as follows: [5, 6]
 
 *
 * The Official Match Result is a Draw: According to FIFA and IFAB, a match decided by penalties is statistically recorded as a draw (remis). Goals scored during the shootout do not count toward the team’s total goals in the match, nor do they add to a player’s individual goal-scoring statistics. The shootout purely determines who advances or wins the trophy. [6, 7, 8]
