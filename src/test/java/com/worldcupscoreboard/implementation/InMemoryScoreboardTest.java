@@ -4,6 +4,7 @@ import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.InvalidMatchStateException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
+import com.worldcupscoreboard.model.MatchId;
 import com.worldcupscoreboard.model.MatchStatus;
 import com.worldcupscoreboard.model.MatchSummary;
 import org.junit.jupiter.api.Test;
@@ -156,6 +157,7 @@ class InMemoryScoreboardTest {
         InMemoryScoreboard board = new InMemoryScoreboard();
 
         assertThrows(MatchNotFoundException.class, () -> board.getMatch(null));
+        assertThrows(MatchNotFoundException.class, () -> board.getMatch(MatchId.generate()));
     }
 
     private static void updateTo(

@@ -287,6 +287,7 @@ Record each meaningful AI-assisted task using the following information:
 | 32 | 2026-09-24 | `README.md`, `src/main/java/com/worldcupscoreboard/api/Scoreboard.java` | Document the score and result API design consultation | Explained why live scores come from `getSummary()` and outcomes/state come from `getMatchResult()` | Requested the design consultation be documented; accepted the separation between score updates and result classification |
 | 33 | 2026-09-24 | `src/main/java/com/worldcupscoreboard/implementation/`, `README.md` | Refine result naming and project documentation | Renamed the internal result method to `getResult`, reviewed explicit imports, and corrected the README structure and operation wording | Requested the refactor and documentation audit; accepted keeping the public `getMatchResult` API unchanged |
 | 34 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Replace result-only retrieval with complete match retrieval | Replaced `getMatchResult` and `MatchResult` with `getMatch`, returning complete active or finished `MatchSummary` snapshots | Requested the more useful recruitment-task API; reviewed tests and documented the query-boundary rationale |
+| 35 | 2026-09-24 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java` | Cover generated unknown match IDs | Added an assertion that retrieving a generated but unregistered ID throws `MatchNotFoundException`, while retaining the null-ID assertion | Requested the missing edge-case coverage; focused test passed and `git diff --check` passed |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -495,6 +496,20 @@ Record each meaningful AI-assisted task using the following information:
 - **Verification:** Reviewed the API and structure changes and retained
   behavior-focused tests for active, finished, and unknown match retrieval.
 - **Result:** The fifth operation now retrieves complete match snapshots.
+
+### 35. 2026-09-24 — Cover generated unknown match IDs
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`
+- **Prompt or goal:** Ensure match retrieval rejects a generated ID that is not
+  present in the scoreboard, in addition to a null ID.
+- **AI contribution:** Added a `MatchId.generate()` assertion expecting
+  `MatchNotFoundException` and imported `MatchId`.
+- **Developer decision:** Accepted the focused test change because it directly
+  covers the unknown-ID contract without changing production behavior.
+- **Verification:** Ran the focused `InMemoryScoreboardTest` and
+  `git diff --check` successfully.
+- **Result:** Unknown retrieval coverage now includes both null and absent
+  generated identifiers.
 
 ### Entry template
 
