@@ -274,6 +274,11 @@ Record each meaningful AI-assisted task using the following information:
 | 19 | 2026-09-23 | `src/main/java/com/worldcupscoreboard/implementation/` | Separate scoreboard validation and lifecycle logic | Extracted one-goal score validation, moved match transitions into `MatchState`, centralized summary ordering, and reused `MatchId.generate()` | Requested the proposed SRP refactoring to make `InMemoryScoreboard` smaller and easier to read |
 | 20 | 2026-09-23 | `src/main/java/com/worldcupscoreboard/implementation/` | Extract summary ordering comparator | Moved the summary ordering rule into package-private `MatchStateSummaryComparator` | Requested a dedicated comparator so `InMemoryScoreboard` remains focused on orchestration |
 | 21 | 2026-09-23 | `src/main/java/com/worldcupscoreboard/api/`, `src/main/java/com/worldcupscoreboard/implementation/` | Normalize scoreboard type naming | Renamed `ScoreBoard` to `Scoreboard` and `InMemoryScoreBoard` to `InMemoryScoreboard`, including tests and documentation | Requested conventional Java compound-word naming; retained implementation helpers in the implementation package |
+| 22 | 2026-09-24 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java` | Review and decide on the `updateTo` test helper | Explained the helper's purpose, trade-offs, and explicit-update alternatives | Requested the recommended approach, then restored the helper-based version after review |
+| 23 | 2026-09-24 | `src/test/java/com/worldcupscoreboard/implementation/` | Expand missing scoreboard test coverage | Identified validation and concurrency coverage gaps and implemented focused tests in existing classes | Requested no new test classes and reviewed the passing full test suite |
+| 24 | 2026-09-24 | `src/main/java/com/worldcupscoreboard/implementation/`, `src/test/java/com/worldcupscoreboard/implementation/` | Decide whether validator-specific tests are needed | Recommended testing `ScoreUpdateValidator` through the public scoreboard boundary | Accepted the boundary-test approach and did not add a separate validator test class |
+| 25 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Check basic functionality requirements | Audited the four mandatory operations and related lifecycle, ordering, validation, immutability, and concurrency behavior | Reviewed the analysis and confirmed no production changes were needed |
+| 26 | 2026-09-24 | `AI.md` | Complete recent AI usage tracking | Identified missing records for the latest test analysis, implementation decisions, and requirements audit | Requested this update and reviewed the resulting documentation change |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -288,6 +293,81 @@ Record each meaningful AI-assisted task using the following information:
   `mvn verify` passed with 12 tests and the 80% JaCoCo coverage gate.
 - **Result:** Score transitions now model one discrete football goal event or
   one-goal correction.
+
+### 22. 2026-09-24 — Review the `updateTo` test helper
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`
+- **Prompt or goal:** Analyse whether the `updateTo` helper follows testing
+  best practices and explain alternatives.
+- **AI contribution:** Explained that the helper builds legal one-goal
+  transitions, but hides domain behavior and repeatedly reads from the public
+  summary. Recommended explicit updates for behavior-focused tests or a
+  clearer helper with explicit starting and target scores.
+- **Developer decision:** Requested implementation of the recommended
+  approach, then decided to restore the previous helper-based version after
+  reviewing the change.
+- **Verification:** Inspected the diff after restoration and preserved the
+  existing unrelated test changes.
+- **Result:** The original `updateTo` helper remains in place by developer
+  choice.
+
+### 23. 2026-09-24 — Analyse missing scoreboard tests
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/`
+- **Prompt or goal:** Review the existing in-memory scoreboard tests and
+  identify meaningful coverage gaps without unnecessarily adding test classes.
+- **AI contribution:** Identified missing coverage for null team names,
+  trimming, duplicate-team checks in both positions, score boundaries, and
+  strict exception assertions in concurrency tests.
+- **Developer decision:** Requested the missing coverage to be added to the
+  existing test classes.
+- **Verification:** Ran the complete Maven test suite successfully.
+- **Result:** Existing test classes now cover the identified validation and
+  concurrency cases.
+
+### 24. 2026-09-24 — Validate implementation-package test boundaries
+
+- **Area/files:** `src/main/java/com/worldcupscoreboard/implementation/`,
+  `src/test/java/com/worldcupscoreboard/implementation/`
+- **Prompt or goal:** Determine whether `ScoreUpdateValidator` requires a
+  dedicated test class.
+- **AI contribution:** Recommended testing the package-private validator
+  through the public `InMemoryScoreboard.updateScore` API rather than coupling
+  tests to an implementation detail. Identified away-team scoring as the one
+  useful additional boundary case.
+- **Developer decision:** Kept validation tests at the scoreboard boundary and
+  did not add a separate validator test class.
+- **Verification:** Reviewed validator behavior and existing scoreboard tests.
+- **Result:** No new validation test class was introduced.
+
+### 25. 2026-09-24 — Audit basic functionality requirements
+
+- **Area/files:** `src/main/java/`, `src/test/java/`, `README.md`
+- **Prompt or goal:** Check whether all basic scoreboard functionality is
+  implemented.
+- **AI contribution:** Compared the public API and implementation with the
+  four mandatory operations: starting, updating, finishing, and summarizing
+  matches. Also reviewed lifecycle, ordering, validation, immutability, and
+  thread-safety behavior.
+- **Developer decision:** Accepted the conclusion that the mandatory
+  functionality is implemented and that no production changes are required.
+- **Verification:** Reviewed all main source files, tests, and documented
+  requirements.
+- **Result:** Confirmed that the implementation satisfies the basic scope.
+
+### 26. 2026-09-24 — Verify AI usage tracking
+
+- **Area/files:** `AI.md`
+- **Prompt or goal:** Check whether AI-assisted work was being tracked in the
+  repository.
+- **AI contribution:** Audited the AI usage summary, prompt history,
+  interaction table, and commit attribution. Identified that the recent test
+  analysis and validation changes were not yet recorded.
+- **Developer decision:** Requested that the recent conversations and changes
+  be added to `AI.md`.
+- **Verification:** Compared the documented history with the recent source
+  changes and commits.
+- **Result:** Extended this file with the missing recent AI-assisted work.
 
 ### Entry template
 
