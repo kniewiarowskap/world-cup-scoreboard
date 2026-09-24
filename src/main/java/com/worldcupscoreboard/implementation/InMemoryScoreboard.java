@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/** Thread-safe in-memory implementation of the scoreboard API. */
 public final class InMemoryScoreboard implements Scoreboard {
     private final Object lock = new Object();
     private final Map<MatchId, MatchState> matches = new HashMap<>();
