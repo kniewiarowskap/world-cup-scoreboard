@@ -281,6 +281,11 @@ Record each meaningful AI-assisted task using the following information:
 | 26 | 2026-09-24 | `AI.md` | Complete recent AI usage tracking | Identified missing records for the latest test analysis, implementation decisions, and requirements audit | Requested this update and reviewed the resulting documentation change |
 | 27 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Complete recent quality and documentation updates | Added Unicode-aware team-name normalization, public API Javadocs, import cleanup, and clarified that match-result tests are future work | Requested the changes, reviewed the scope, and verified the test suite |
 | 28 | 2026-09-24 | `.github/skills/ai-tracking/SKILL.md`, `AI.md` | Create a reusable AI usage tracking workflow | Added a repository skill with entry templates and consistency checks to reduce missed AI usage records | Requested an automated tracking aid after reviewing recent omissions; reviewed the skill and log update |
+| 29 | 2026-09-24 | `README.md`, Git branch `feature/match-result` | Mark the planned match-result feature branch | Added a Future work section identifying the dedicated branch and preserving the current API scope | Requested the new branch and README marker; reviewed the branch and documentation diff |
+| 30 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Implement the fifth scoreboard operation with TDD | Added finished-match result retrieval with home win, away win, and draw outcomes, plus red/green tests and documentation | Requested TDD implementation on `feature/match-result`; reviewed the API, domain behavior, and passing test suite |
+| 31 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Return the current match state from the result operation | Added `IN_PROGRESS` to `MatchResult`, updated active-match behavior, tests, and documentation | Requested active matches to return their current state instead of throwing; reviewed the focused API change |
+| 32 | 2026-09-24 | `README.md`, `src/main/java/com/worldcupscoreboard/api/Scoreboard.java` | Document the score and result API design consultation | Explained why live scores come from `getSummary()` and outcomes/state come from `getMatchResult()` | Requested the design consultation be documented; accepted the separation between score updates and result classification |
+| 33 | 2026-09-24 | `src/main/java/com/worldcupscoreboard/implementation/`, `README.md` | Refine result naming and project documentation | Renamed the internal result method to `getResult`, reviewed explicit imports, and corrected the README structure and operation wording | Requested the refactor and documentation audit; accepted keeping the public `getMatchResult` API unchanged |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -400,6 +405,79 @@ Record each meaningful AI-assisted task using the following information:
   tracking sections consistently, and checked the documentation diff.
 - **Result:** Future meaningful AI-assisted changes have a documented workflow
   for updating `AI.md`.
+
+### 29. 2026-09-24 — Mark the planned match-result feature branch
+
+- **Area/files:** `README.md`, Git branch `feature/match-result`
+- **Prompt or goal:** Create a dedicated branch for the planned additional
+  match-result operation and identify it in the project documentation.
+- **AI contribution:** Created `feature/match-result` and added a README
+  section distinguishing the future operation from the current API.
+- **Developer decision:** Requested the branch and documentation marker.
+- **Verification:** Confirmed the active branch and reviewed the README diff.
+- **Result:** Future match-result work has a named branch and documented scope.
+
+### 30. 2026-09-24 — Implement the fifth scoreboard operation with TDD
+
+- **Area/files:** `src/main/java/`, `src/test/java/`, `README.md`
+- **Prompt or goal:** Implement the one additional operation required by the
+  assignment on the dedicated `feature/match-result` branch using TDD.
+- **AI contribution:** Added failing tests first, then implemented
+  `MatchResult`, `getMatchResult`, finished-match result calculation, API
+  documentation, and README updates identifying it as the fifth operation.
+- **Developer decision:** Requested home-win, away-win, and draw results only
+  for finished matches and accepted the selected enum-based API.
+- **Verification:** Confirmed the red phase failed before implementation, then
+  ran the full Maven test suite successfully after implementation.
+- **Result:** The fifth scoreboard operation is implemented and documented.
+
+### 31. 2026-09-24 — Return the current match state from the result operation
+
+- **Area/files:** `src/main/java/`, `src/test/java/`, `README.md`
+- **Prompt or goal:** Allow `getMatchResult` to report that an active match is
+  still in progress instead of rejecting the request.
+- **AI contribution:** Added `IN_PROGRESS` to `MatchResult`, returned it for
+  active matches, updated the public contract and README, and changed the
+  regression test to assert the new behavior.
+- **Developer decision:** Requested current-state responses for active matches
+  while retaining `MatchNotFoundException` for unknown matches.
+- **Verification:** Reviewed the focused implementation, test, and documentation
+  changes.
+- **Result:** `getMatchResult` now reports both active and finished match states.
+
+### 32. 2026-09-24 — Document the score and result API design consultation
+
+- **Area/files:** `README.md`,
+  `src/main/java/com/worldcupscoreboard/api/Scoreboard.java`
+- **Prompt or goal:** Record how callers update a live score without using the
+  match result operation.
+- **AI contribution:** Explained that `getSummary()` provides the current
+  active score, `updateScore(...)` applies the new score, and
+  `getMatchResult(...)` reports state or final outcome only.
+- **Developer decision:** Requested this design consultation to be added to
+  the README and accepted the separation of score data from result
+  classification.
+- **Verification:** Reviewed the public API behavior and documented the
+  intended caller flow and rationale.
+- **Result:** The README now explains how the score and result operations work
+  together.
+
+### 33. 2026-09-24 — Refine result naming and project documentation
+
+- **Area/files:** `src/main/java/com/worldcupscoreboard/implementation/`,
+  `README.md`
+- **Prompt or goal:** Rename the internal result method and audit project
+  structure, imports, and README completeness.
+- **AI contribution:** Renamed `MatchState.result()` to `getResult()`,
+  confirmed production imports are explicit, and updated the README tree and
+  operation wording to include the fifth operation and implementation helpers.
+- **Developer decision:** Requested the internal refactor while retaining the
+  public `getMatchResult()` API because it clearly describes the public
+  operation.
+- **Verification:** Reviewed source imports, project structure, README
+  consistency, and the resulting diff.
+- **Result:** Naming and project documentation now match the implemented
+  structure and API.
 
 ### Entry template
 

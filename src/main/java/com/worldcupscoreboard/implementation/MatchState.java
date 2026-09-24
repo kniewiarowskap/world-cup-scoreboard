@@ -2,6 +2,7 @@ package com.worldcupscoreboard.implementation;
 
 import com.worldcupscoreboard.exception.InvalidMatchStateException;
 import com.worldcupscoreboard.model.MatchId;
+import com.worldcupscoreboard.model.MatchResult;
 import com.worldcupscoreboard.model.MatchStatus;
 import com.worldcupscoreboard.model.MatchSummary;
 import com.worldcupscoreboard.model.Score;
@@ -40,6 +41,19 @@ final class MatchState {
     void finish() {
         ensureInProgress();
         status = MatchStatus.FINISHED;
+    }
+
+    MatchResult getResult() {
+        if (status != MatchStatus.FINISHED) {
+            return MatchResult.IN_PROGRESS;
+        }
+        if (score.home() > score.away()) {
+            return MatchResult.HOME_WIN;
+        }
+        if (score.home() < score.away()) {
+            return MatchResult.AWAY_WIN;
+        }
+        return MatchResult.DRAW;
     }
 
     private void ensureInProgress() {
