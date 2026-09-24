@@ -4,7 +4,9 @@ import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.InvalidMatchStateException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
+import com.worldcupscoreboard.model.MatchId;
 import com.worldcupscoreboard.model.MatchStatus;
+import com.worldcupscoreboard.model.MatchSummary;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class InMemoryScoreboardTest {
+
     @Test
     void startsMatchAtZeroAndReturnsItInSummary() {
         InMemoryScoreboard board = new InMemoryScoreboard();
@@ -29,10 +32,25 @@ class InMemoryScoreboardTest {
     @Test
     void rejectsInvalidTeamsAndActiveDuplicates() {
         InMemoryScoreboard board = new InMemoryScoreboard();
+        assertThrows(InvalidMatchException.class, () -> board.startMatch(null, "Canada"));
+        assertThrows(InvalidMatchException.class, () -> board.startMatch("Mexico", null));
         assertThrows(InvalidMatchException.class, () -> board.startMatch(" ", "Canada"));
         assertThrows(InvalidMatchException.class, () -> board.startMatch("Mexico", " mexico "));
         board.startMatch("Mexico", "Canada");
         assertThrows(TeamAlreadyPlayingException.class, () -> board.startMatch("CANADA", "Spain"));
+        assertThrows(TeamAlreadyPlayingException.class, () -> board.startMatch("Spain", "MEXICO"));
+        assertThrows(TeamAlreadyPlayingException.class, () -> board.startMatch("MEXICO", "CANADA"));
+    }
+
+    @Test
+    void trimsTeamNamesBeforeStoringThem() {
+        InMemoryScoreboard board = new InMemoryScoreboard();
+        board.startMatch("  Mexico  ", " Canada ");
+
+        var summary = board.getSummary().getFirst();
+
+        assertEquals("Mexico", summary.homeTeam());
+        assertEquals("Canada", summary.awayTeam());
     }
 
     @Test
@@ -45,7 +63,7 @@ class InMemoryScoreboardTest {
         updateTo(board, spain, 2, 2);
         updateTo(board, germany, 2, 2);
         assertEquals(List.of(mexico, germany, spain),
-                board.getSummary().stream().map(summary -> summary.matchId()).toList());
+                board.getSummary().stream().map(MatchSummary::matchId).toList());
     }
 
     @Test
@@ -77,6 +95,7 @@ class InMemoryScoreboardTest {
     void rejectsUpdatesThatChangeBothTeamsOrMoreThanOneGoal() {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("A", "B");
+        assertThrows(InvalidMatchException.class, () -> board.updateScore(matchId, 0, 0));
         assertThrows(InvalidMatchException.class, () -> board.updateScore(matchId, 1, 1));
         assertThrows(InvalidMatchException.class, () -> board.updateScore(matchId, 2, 0));
         board.updateScore(matchId, 1, 0);
@@ -90,6 +109,7 @@ class InMemoryScoreboardTest {
         assertThrows(MatchNotFoundException.class, () -> board.updateScore(null, 0, 0));
         assertThrows(MatchNotFoundException.class, () -> board.finishMatch(null));
         assertThrows(IllegalArgumentException.class, () -> board.updateScore(matchId, -1, 0));
+        assertThrows(IllegalArgumentException.class, () -> board.updateScore(matchId, 0, -1));
     }
 
     @Test
