@@ -3,6 +3,16 @@
 Java/Maven library implementing a Live Football World Cup Scoreboard with
 match management, live score updates, and ordered match summaries.
 
+## Technology stack
+
+- Java 25
+- Maven
+- JUnit Jupiter 5.10.2 for tests
+- JaCoCo 0.8.15 for test coverage and the 80% line-coverage verification gate
+- Git and GitHub for version control and collaboration
+- GitHub Copilot for development assistance
+- CodeRabbit for automated pull-request reviews in GitHub
+
 ## Maven and package structure
 
 This is a small recruitment project, so the package name is intentionally
@@ -67,6 +77,9 @@ The summary is ordered by:
 The implementation contains the four mandatory operations. The fifth
 operation, `getMatch`, is the one additional operation selected for this
 implementation.
+
+The fifth operation was introduced in a distinct feature commit, as required
+by the assignment.
 
 The expected summary ordering is illustrated by the following matches:
 

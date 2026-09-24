@@ -15,6 +15,11 @@ AI assistance may be used for:
 - explaining compiler errors, test failures, and unfamiliar APIs;
 - reviewing changes for correctness, readability, and maintainability.
 
+Tools used during development included GitHub Copilot for repository analysis,
+design discussion, code and test changes, and documentation; CodeRabbit for
+automated code reviews on GitHub pull requests; Maven for builds and tests;
+JUnit Jupiter for behavior tests; and JaCoCo for coverage verification.
+
 The developer remains responsible for the final design, implementation,
 security, and correctness of the project. AI-generated suggestions are reviewed,
 adapted where necessary, and validated with the project's available checks.
@@ -294,6 +299,8 @@ Record each meaningful AI-assisted task using the following information:
 | 34 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Replace result-only retrieval with complete match retrieval | Replaced `getMatchResult` and `MatchResult` with `getMatch`, returning complete active or finished `MatchSummary` snapshots | Requested the more useful recruitment-task API; reviewed tests and documented the query-boundary rationale |
 | 35 | 2026-09-24 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java` | Cover generated unknown match IDs | Added an assertion that retrieving a generated but unregistered ID throws `MatchNotFoundException`, while retaining the null-ID assertion | Requested the missing edge-case coverage; focused test passed and `git diff --check` passed |
 | 36 | 2026-09-24 | `README.md`, `football-rules.md`, `AI.md` | Separate project documentation by purpose | Added a README usage example and rules reference, rewrote the football reference as a concise scoped document, and clarified the current API in AI.md | Requested a clearer format and folder decision; kept all files at the repository root and reviewed the documentation diff |
+| 37 | 2026-09-24 | `README.md`, `AI.md` | Document the technology stack and development tools | Added the Java, Maven, JUnit, JaCoCo, GitHub Copilot, and CodeRabbit toolchain to the project documentation | Requested the stack and AI review tools to be documented; reviewed the wording and kept the descriptions aligned with the project configuration |
+| 38 | 2026-09-24 | `README.md`, `AI.md` | Document the distinct fifth-operation commit | Documented that the fifth operation was introduced in a distinct feature commit without preserving a hash after the squash operation | Requested explicit traceability without a stale commit hash; reviewed the documentation diff |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -532,6 +539,34 @@ Record each meaningful AI-assisted task using the following information:
   and checked that the README describes the current `getMatch` API.
 - **Result:** Project documentation now has clearer separation between
   requirements, implementation guidance, AI history, and football context.
+
+### 37. 2026-09-24 — Document the technology stack and development tools
+
+- **Area/files:** `README.md`, `AI.md`
+- **Prompt or goal:** Add the project's technology stack and record the AI and
+  review tools used during development, including CodeRabbit reviews in GitHub.
+- **AI contribution:** Added stack details for Java, Maven, JUnit, JaCoCo, Git,
+  GitHub Copilot, and CodeRabbit to the project documentation.
+- **Developer decision:** Accepted concise tool descriptions and documented
+  CodeRabbit as the automated pull-request review tool.
+- **Verification:** Compared the documented Java, dependency, and plugin
+  versions with `pom.xml` and reviewed the resulting documentation diff.
+- **Result:** The README now exposes the technology stack, while AI.md records
+  the development and review tooling.
+
+### 38. 2026-09-24 — Document the distinct fifth-operation commit
+
+- **Area/files:** `README.md`, `AI.md`
+- **Prompt or goal:** Add explicit README traceability for the requirement that
+  the fifth operation be introduced in a distinct Git commit.
+- **AI contribution:** Added a concise statement that the fifth operation was
+  introduced in a distinct feature commit.
+- **Developer decision:** Removed the commit hash and subject after the feature
+  history was squashed, avoiding a stale reference.
+- **Verification:** Reviewed the documentation diff and confirmed no commit hash
+  remains in the README statement.
+- **Result:** The README records the distinct-commit requirement without tying
+  it to a superseded hash.
 
 ### Entry template
 
