@@ -30,7 +30,10 @@ world-cup-scoreboard/
 │   │   │   ├── Score.java
 │   │   │   └── ...
 │   │   ├── implementation/
-│   │   │   └── InMemoryScoreboard.java
+│   │   │   ├── InMemoryScoreboard.java
+│   │   │   ├── MatchState.java
+│   │   │   ├── MatchStateSummaryComparator.java
+│   │   │   └── ScoreUpdateValidator.java
 │   │   └── exception/
 │   │       └── ...
 │   └── test/java/com/worldcupscoreboard/
@@ -61,8 +64,9 @@ The summary is ordered by:
 1. total score, descending;
 2. most recently started match first when total scores are tied.
 
-The implementation initially contains only the four mandatory operations.
-Additional operations will be considered in a later change.
+The implementation contains the four mandatory operations. The fifth
+operation, `getMatch`, is the one additional operation selected for this
+implementation.
 
 The expected summary ordering is illustrated by the following matches:
 
@@ -99,13 +103,15 @@ void updateScore(MatchId matchId, int homeScore, int awayScore);
 
 void finishMatch(MatchId matchId);
 
+MatchSummary getMatch(MatchId matchId);
+
 List<MatchSummary> getSummary();
 
 ```
 
-`MatchId`, `MatchSummary`, and `Score` are domain types. The API uses a generated
-match ID instead of team names because the same teams may play again after an
-earlier match has finished.
+`MatchId`, `MatchSummary`, and `Score` are domain types. The API uses a
+generated match ID instead of team names because the same teams may play again
+after an earlier match has finished.
 
 ## Assumptions and domain rules
 
@@ -158,6 +164,22 @@ penalty shoot-outs. A score update is accepted while the match is
 `IN_PROGRESS`; the consuming application decides when to call `finishMatch`.
 This keeps the API focused on scoreboard state and lifecycle.
 
+## Match retrieval
+
+The additional `getMatch(MatchId)` operation returns a complete immutable
+snapshot for either an active or finished match, including its ID, teams,
+score, and lifecycle status. This is more useful than returning only a result
+enum because callers can inspect a historical match without needing to
+reconstruct its state or derive its identifier from the active summary.
+
+The operation is intentionally separate from `getSummary()`: `getSummary()`
+returns all active matches in scoreboard order, while `getMatch(...)` retrieves
+one known match, including finished matches. Callers still use `getSummary()`
+to read an active score before calling `updateScore(...)`. This design was
+chosen for the recruitment task because it demonstrates a useful query
+boundary, reuses the existing immutable `MatchSummary` type, and adds exactly
+one operation without duplicating result-calculation logic.
+
 ## Storage and integration boundary
 
 The reference implementation stores state in memory. This is appropriate for
@@ -172,7 +194,7 @@ that transport.
 
 Finished matches are retained with `FINISHED` status and excluded from the
 active summary. Administrative forfeits and post-match disciplinary decisions
-are outside the current four-operation API.
+are outside the current scoreboard API.
 
 ## Thread safety
 
@@ -250,6 +272,6 @@ Tests should cover:
 - rejecting unknown IDs and updates after finishing;
 - finishing matches and excluding them from the summary;
 - the required summary ordering and tie-breaking;
-- retrieving home wins, away wins, and draws (planned for a future operation);
+- retrieving active and finished match snapshots;
 - immutable summary results;
 - concurrent operations preserving the domain invariants.

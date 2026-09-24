@@ -63,6 +63,13 @@ public final class InMemoryScoreboard implements Scoreboard {
     }
 
     @Override
+    public MatchSummary getMatch(MatchId matchId) {
+        synchronized (lock) {
+            return requireMatch(matchId).summary();
+        }
+    }
+
+    @Override
     public List<MatchSummary> getSummary() {
         synchronized (lock) {
             return matches.values().stream()
