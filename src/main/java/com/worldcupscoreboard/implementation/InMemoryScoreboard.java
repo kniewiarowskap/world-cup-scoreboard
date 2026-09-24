@@ -89,7 +89,7 @@ public final class InMemoryScoreboard implements Scoreboard {
         if (team == null || team.isBlank()) {
             throw new InvalidMatchException("Team name must not be blank");
         }
-        return team.trim();
+        return team.strip();
     }
 
     private static String normalize(String team) {

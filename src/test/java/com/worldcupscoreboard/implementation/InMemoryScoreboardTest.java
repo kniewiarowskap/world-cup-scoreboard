@@ -39,6 +39,8 @@ class InMemoryScoreboardTest {
         assertThrows(TeamAlreadyPlayingException.class, () -> board.startMatch("CANADA", "Spain"));
         assertThrows(TeamAlreadyPlayingException.class, () -> board.startMatch("Spain", "MEXICO"));
         assertThrows(TeamAlreadyPlayingException.class, () -> board.startMatch("MEXICO", "CANADA"));
+        assertThrows(TeamAlreadyPlayingException.class,
+                () -> board.startMatch("\u2003MEXICO\u2003", "Spain"));
     }
 
     @Test
