@@ -250,6 +250,6 @@ Tests should cover:
 - rejecting unknown IDs and updates after finishing;
 - finishing matches and excluding them from the summary;
 - the required summary ordering and tie-breaking;
-- retrieving home wins, away wins, and draws;
+- retrieving home wins, away wins, and draws (planned for a future operation);
 - immutable summary results;
 - concurrent operations preserving the domain invariants.
