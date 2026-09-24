@@ -4,6 +4,7 @@ import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.InvalidMatchStateException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
+import com.worldcupscoreboard.model.MatchId;
 import com.worldcupscoreboard.model.MatchStatus;
 import com.worldcupscoreboard.model.MatchSummary;
 import org.junit.jupiter.api.Test;
@@ -121,6 +122,42 @@ class InMemoryScoreboardTest {
         board.updateScore(matchId, 1, 0);
         assertEquals(0, snapshot.getFirst().totalScore());
         assertThrows(UnsupportedOperationException.class, snapshot::clear);
+    }
+
+    @Test
+    void retrievesFinishedMatchSnapshot() {
+        InMemoryScoreboard board = new InMemoryScoreboard();
+        var matchId = board.startMatch("A", "B");
+        updateTo(board, matchId, 2, 1);
+        board.finishMatch(matchId);
+
+        var match = board.getMatch(matchId);
+        assertEquals(matchId, match.matchId());
+        assertEquals("A", match.homeTeam());
+        assertEquals("B", match.awayTeam());
+        assertEquals(2, match.homeScore());
+        assertEquals(1, match.awayScore());
+        assertEquals(MatchStatus.FINISHED, match.status());
+    }
+
+    @Test
+    void retrievesActiveMatchSnapshot() {
+        InMemoryScoreboard board = new InMemoryScoreboard();
+        var matchId = board.startMatch("A", "B");
+        board.updateScore(matchId, 1, 0);
+
+        var match = board.getMatch(matchId);
+        assertEquals(1, match.homeScore());
+        assertEquals(0, match.awayScore());
+        assertEquals(MatchStatus.IN_PROGRESS, match.status());
+    }
+
+    @Test
+    void rejectsUnknownMatchRetrieval() {
+        InMemoryScoreboard board = new InMemoryScoreboard();
+
+        assertThrows(MatchNotFoundException.class, () -> board.getMatch(null));
+        assertThrows(MatchNotFoundException.class, () -> board.getMatch(MatchId.generate()));
     }
 
     private static void updateTo(

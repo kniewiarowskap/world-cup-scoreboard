@@ -53,6 +53,18 @@ public interface Scoreboard {
     void finishMatch(MatchId matchId);
 
     /**
+     * Returns an immutable snapshot of a specific match.
+     *
+     * <p>The snapshot can represent either an active or finished match and
+     * includes its identifier, teams, score, and lifecycle status.</p>
+     *
+     * @param matchId the match to retrieve
+     * @return the requested match snapshot
+     * @throws MatchNotFoundException if the match is unknown
+     */
+    MatchSummary getMatch(MatchId matchId);
+
+    /**
      * Returns an immutable snapshot of all matches currently in progress.
      *
      * <p>Results are ordered by total score descending, then by start time
