@@ -3,6 +3,16 @@
 Java/Maven library implementing a Live Football World Cup Scoreboard with
 match management, live score updates, and ordered match summaries.
 
+## Technology stack
+
+- Java 25
+- Maven
+- JUnit Jupiter 5.10.2 for tests
+- JaCoCo 0.8.15 for test coverage and the 80% line-coverage verification gate
+- Git and GitHub for version control and collaboration
+- GitHub Copilot for development assistance
+- CodeRabbit for automated pull-request reviews in GitHub
+
 ## Maven and package structure
 
 This is a small recruitment project, so the package name is intentionally
@@ -49,7 +59,7 @@ domain types, `implementation` contains the in-memory implementation, and
 `exception` contains domain-specific failures. Tests are organized around
 observable behavior and mirror the relevant production packages.
 
-## Assignment requirements
+## Implemented requirements
 
 The library must support multiple matches in progress and provide these core
 operations:
@@ -67,6 +77,9 @@ The summary is ordered by:
 The implementation contains the four mandatory operations. The fifth
 operation, `getMatch`, is the one additional operation selected for this
 implementation.
+
+The fifth operation was introduced in a distinct feature commit, as required
+by the assignment.
 
 The expected summary ordering is illustrated by the following matches:
 
@@ -113,6 +126,25 @@ List<MatchSummary> getSummary();
 generated match ID instead of team names because the same teams may play again
 after an earlier match has finished.
 
+### Usage example
+
+```java
+Scoreboard scoreboard = new InMemoryScoreboard();
+
+MatchId matchId = scoreboard.startMatch("Mexico", "Canada");
+scoreboard.updateScore(matchId, 1, 0);
+
+MatchSummary liveMatch = scoreboard.getMatch(matchId);
+List<MatchSummary> activeMatches = scoreboard.getSummary();
+
+scoreboard.finishMatch(matchId);
+MatchSummary finishedMatch = scoreboard.getMatch(matchId);
+```
+
+`getSummary()` returns all matches that are currently in progress in scoreboard
+order. `getMatch(...)` retrieves one known match and can return either an
+active or finished snapshot.
+
 ## Assumptions and domain rules
 
 - Team names cannot be `null` or blank.
@@ -158,9 +190,10 @@ goal scored: 1 - 0
 goal disallowed: 0 - 0
 ```
 
-The library does not model the complete Laws of the Game. In particular, it
-does not implement a match clock, halves, stoppage time, extra time, or
-penalty shoot-outs. A score update is accepted while the match is
+The library does not model the complete Laws of the Game. The relevant football
+rules and their sources are summarized in [`football-rules.md`](football-rules.md).
+In particular, this implementation does not include a match clock, halves,
+stoppage time, extra time, or penalty shoot-outs. A score update is accepted while the match is
 `IN_PROGRESS`; the consuming application decides when to call `finishMatch`.
 This keeps the API focused on scoreboard state and lifecycle.
 
