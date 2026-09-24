@@ -19,6 +19,11 @@ The developer remains responsible for the final design, implementation,
 security, and correctness of the project. AI-generated suggestions are reviewed,
 adapted where necessary, and validated with the project's available checks.
 
+The current implementation provides four required scoreboard operations and one
+additional operation, `getMatch(MatchId)`. Earlier entries may refer to the
+superseded `getMatchResult` and `MatchResult` design; those references are kept
+as historical records and are not part of the current production API.
+
 ## Context and guiding artifacts
 
 The following materials provide context for the AI-assisted work:
@@ -288,6 +293,7 @@ Record each meaningful AI-assisted task using the following information:
 | 33 | 2026-09-24 | `src/main/java/com/worldcupscoreboard/implementation/`, `README.md` | Refine result naming and project documentation | Renamed the internal result method to `getResult`, reviewed explicit imports, and corrected the README structure and operation wording | Requested the refactor and documentation audit; accepted keeping the public `getMatchResult` API unchanged |
 | 34 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Replace result-only retrieval with complete match retrieval | Replaced `getMatchResult` and `MatchResult` with `getMatch`, returning complete active or finished `MatchSummary` snapshots | Requested the more useful recruitment-task API; reviewed tests and documented the query-boundary rationale |
 | 35 | 2026-09-24 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java` | Cover generated unknown match IDs | Added an assertion that retrieving a generated but unregistered ID throws `MatchNotFoundException`, while retaining the null-ID assertion | Requested the missing edge-case coverage; focused test passed and `git diff --check` passed |
+| 36 | 2026-09-24 | `README.md`, `football-rules.md`, `AI.md` | Separate project documentation by purpose | Added a README usage example and rules reference, rewrote the football reference as a concise scoped document, and clarified the current API in AI.md | Requested a clearer format and folder decision; kept all files at the repository root and reviewed the documentation diff |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -510,6 +516,22 @@ Record each meaningful AI-assisted task using the following information:
   `git diff --check` successfully.
 - **Result:** Unknown retrieval coverage now includes both null and absent
   generated identifiers.
+
+### 36. 2026-09-24 — Separate project documentation by purpose
+
+- **Area/files:** `README.md`, `football-rules.md`, `AI.md`
+- **Prompt or goal:** Clarify whether the project documentation belongs in
+  separate folders and make each document's purpose and format distinct.
+- **AI contribution:** Added a usage example and explicit rules reference to
+  `README.md`, rewrote `football-rules.md` as a scoped domain reference, and
+  documented the current API versus historical designs in `AI.md`.
+- **Developer decision:** Kept the files at the repository root because they
+  are project-level artifacts and the assignment expects `README.md` and
+  `AI.md` there. Left `task.md` as the original assignment specification.
+- **Verification:** Reviewed the three documents for distinct responsibilities
+  and checked that the README describes the current `getMatch` API.
+- **Result:** Project documentation now has clearer separation between
+  requirements, implementation guidance, AI history, and football context.
 
 ### Entry template
 
