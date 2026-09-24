@@ -5,7 +5,6 @@ import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
 import com.worldcupscoreboard.model.MatchId;
-import com.worldcupscoreboard.model.MatchResult;
 import com.worldcupscoreboard.model.MatchStatus;
 import com.worldcupscoreboard.model.MatchSummary;
 import com.worldcupscoreboard.model.Score;
@@ -64,9 +63,9 @@ public final class InMemoryScoreboard implements Scoreboard {
     }
 
     @Override
-    public MatchResult getMatchResult(MatchId matchId) {
+    public MatchSummary getMatch(MatchId matchId) {
         synchronized (lock) {
-            return requireMatch(matchId).getResult();
+            return requireMatch(matchId).summary();
         }
     }
 

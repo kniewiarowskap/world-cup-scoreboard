@@ -4,7 +4,6 @@ import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.InvalidMatchStateException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
-import com.worldcupscoreboard.model.MatchResult;
 import com.worldcupscoreboard.model.MatchStatus;
 import com.worldcupscoreboard.model.MatchSummary;
 import org.junit.jupiter.api.Test;
@@ -125,37 +124,38 @@ class InMemoryScoreboardTest {
     }
 
     @Test
-    void returnsResultForFinishedHomeWin() {
+    void retrievesFinishedMatchSnapshot() {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("A", "B");
         updateTo(board, matchId, 2, 1);
         board.finishMatch(matchId);
 
-        assertEquals(MatchResult.HOME_WIN, board.getMatchResult(matchId));
+        var match = board.getMatch(matchId);
+        assertEquals(matchId, match.matchId());
+        assertEquals("A", match.homeTeam());
+        assertEquals("B", match.awayTeam());
+        assertEquals(2, match.homeScore());
+        assertEquals(1, match.awayScore());
+        assertEquals(MatchStatus.FINISHED, match.status());
     }
 
     @Test
-    void returnsAwayWinAndDrawResults() {
-        InMemoryScoreboard board = new InMemoryScoreboard();
-        var awayWin = board.startMatch("A", "B");
-        updateTo(board, awayWin, 1, 2);
-        board.finishMatch(awayWin);
-
-        var draw = board.startMatch("C", "D");
-        updateTo(board, draw, 1, 1);
-        board.finishMatch(draw);
-
-        assertEquals(MatchResult.AWAY_WIN, board.getMatchResult(awayWin));
-        assertEquals(MatchResult.DRAW, board.getMatchResult(draw));
-    }
-
-    @Test
-    void returnsInProgressForActiveAndRejectsUnknownMatches() {
+    void retrievesActiveMatchSnapshot() {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("A", "B");
+        board.updateScore(matchId, 1, 0);
 
-        assertThrows(MatchNotFoundException.class, () -> board.getMatchResult(null));
-        assertEquals(MatchResult.IN_PROGRESS, board.getMatchResult(matchId));
+        var match = board.getMatch(matchId);
+        assertEquals(1, match.homeScore());
+        assertEquals(0, match.awayScore());
+        assertEquals(MatchStatus.IN_PROGRESS, match.status());
+    }
+
+    @Test
+    void rejectsUnknownMatchRetrieval() {
+        InMemoryScoreboard board = new InMemoryScoreboard();
+
+        assertThrows(MatchNotFoundException.class, () -> board.getMatch(null));
     }
 
     private static void updateTo(

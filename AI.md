@@ -286,6 +286,7 @@ Record each meaningful AI-assisted task using the following information:
 | 31 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Return the current match state from the result operation | Added `IN_PROGRESS` to `MatchResult`, updated active-match behavior, tests, and documentation | Requested active matches to return their current state instead of throwing; reviewed the focused API change |
 | 32 | 2026-09-24 | `README.md`, `src/main/java/com/worldcupscoreboard/api/Scoreboard.java` | Document the score and result API design consultation | Explained why live scores come from `getSummary()` and outcomes/state come from `getMatchResult()` | Requested the design consultation be documented; accepted the separation between score updates and result classification |
 | 33 | 2026-09-24 | `src/main/java/com/worldcupscoreboard/implementation/`, `README.md` | Refine result naming and project documentation | Renamed the internal result method to `getResult`, reviewed explicit imports, and corrected the README structure and operation wording | Requested the refactor and documentation audit; accepted keeping the public `getMatchResult` API unchanged |
+| 34 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Replace result-only retrieval with complete match retrieval | Replaced `getMatchResult` and `MatchResult` with `getMatch`, returning complete active or finished `MatchSummary` snapshots | Requested the more useful recruitment-task API; reviewed tests and documented the query-boundary rationale |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -478,6 +479,22 @@ Record each meaningful AI-assisted task using the following information:
   consistency, and the resulting diff.
 - **Result:** Naming and project documentation now match the implemented
   structure and API.
+
+### 34. 2026-09-24 — Replace result-only retrieval with complete match retrieval
+
+- **Area/files:** `src/main/java/`, `src/test/java/`, `README.md`
+- **Prompt or goal:** Replace the result-only fifth operation with a method
+  that lets callers retrieve complete information for active and historical
+  matches.
+- **AI contribution:** Replaced `getMatchResult(MatchId)` and `MatchResult`
+  with `getMatch(MatchId)`, reused immutable `MatchSummary`, updated tests, and
+  documented the recruitment-task design rationale.
+- **Developer decision:** Chose complete match retrieval because it exposes
+  the match ID, teams, score, and status in one useful query and avoids
+  duplicating result derivation.
+- **Verification:** Reviewed the API and structure changes and retained
+  behavior-focused tests for active, finished, and unknown match retrieval.
+- **Result:** The fifth operation now retrieves complete match snapshots.
 
 ### Entry template
 

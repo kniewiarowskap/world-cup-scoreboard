@@ -5,7 +5,6 @@ import com.worldcupscoreboard.exception.InvalidMatchStateException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
 import com.worldcupscoreboard.model.MatchId;
-import com.worldcupscoreboard.model.MatchResult;
 import com.worldcupscoreboard.model.MatchSummary;
 
 import java.util.List;
@@ -54,14 +53,16 @@ public interface Scoreboard {
     void finishMatch(MatchId matchId);
 
     /**
-     * Returns the current state or final result of a match.
+     * Returns an immutable snapshot of a specific match.
      *
-     * @param matchId the match whose result is requested
-     * @return {@link MatchResult#IN_PROGRESS} for an active match, or the home
-     * win, away win, or draw result for a finished match
+     * <p>The snapshot can represent either an active or finished match and
+     * includes its identifier, teams, score, and lifecycle status.</p>
+     *
+     * @param matchId the match to retrieve
+     * @return the requested match snapshot
      * @throws MatchNotFoundException if the match is unknown
      */
-    MatchResult getMatchResult(MatchId matchId);
+    MatchSummary getMatch(MatchId matchId);
 
     /**
      * Returns an immutable snapshot of all matches currently in progress.
