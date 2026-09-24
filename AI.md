@@ -279,6 +279,8 @@ Record each meaningful AI-assisted task using the following information:
 | 24 | 2026-09-24 | `src/main/java/com/worldcupscoreboard/implementation/`, `src/test/java/com/worldcupscoreboard/implementation/` | Decide whether validator-specific tests are needed | Recommended testing `ScoreUpdateValidator` through the public scoreboard boundary | Accepted the boundary-test approach and did not add a separate validator test class |
 | 25 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Check basic functionality requirements | Audited the four mandatory operations and related lifecycle, ordering, validation, immutability, and concurrency behavior | Reviewed the analysis and confirmed no production changes were needed |
 | 26 | 2026-09-24 | `AI.md` | Complete recent AI usage tracking | Identified missing records for the latest test analysis, implementation decisions, and requirements audit | Requested this update and reviewed the resulting documentation change |
+| 27 | 2026-09-24 | `src/main/java/`, `src/test/java/`, `README.md` | Complete recent quality and documentation updates | Added Unicode-aware team-name normalization, public API Javadocs, import cleanup, and clarified that match-result tests are future work | Requested the changes, reviewed the scope, and verified the test suite |
+| 28 | 2026-09-24 | `.github/skills/ai-tracking/SKILL.md`, `AI.md` | Create a reusable AI usage tracking workflow | Added a repository skill with entry templates and consistency checks to reduce missed AI usage records | Requested an automated tracking aid after reviewing recent omissions; reviewed the skill and log update |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -368,6 +370,36 @@ Record each meaningful AI-assisted task using the following information:
 - **Verification:** Compared the documented history with the recent source
   changes and commits.
 - **Result:** Extended this file with the missing recent AI-assisted work.
+
+### 27. 2026-09-24 — Complete recent quality and documentation updates
+
+- **Area/files:** `src/main/java/`, `src/test/java/`, `README.md`
+- **Prompt or goal:** Apply the remaining review feedback and ensure recent
+  AI-assisted changes are tracked.
+- **AI contribution:** Replaced ASCII-only trimming with Unicode-aware
+  stripping and added regression coverage, documented the public Java API,
+  cleaned up imports, and marked match-result tests as future work.
+- **Developer decision:** Requested the focused changes and accepted public
+  API documentation without adding noisy documentation to private helpers.
+- **Verification:** Ran the test suite and reviewed the resulting diffs and
+  repository scope.
+- **Result:** Recent implementation, test, and documentation improvements are
+  now recorded in the AI usage history.
+
+### 28. 2026-09-24 — Create a reusable AI usage tracking workflow
+
+- **Area/files:** `.github/skills/ai-tracking/SKILL.md`, `AI.md`
+- **Prompt or goal:** Create a repository skill that makes AI-assisted changes
+  easier to track without requiring a separate manual reminder.
+- **AI contribution:** Added a reusable workflow with entry templates,
+  synchronization checks, privacy guidance, and completion checks for the
+  prompt history and interaction table.
+- **Developer decision:** Requested an automated tracking aid after reviewing
+  recent omissions and accepted the skill-based approach.
+- **Verification:** Reviewed the skill instructions, updated both AI.md
+  tracking sections consistently, and checked the documentation diff.
+- **Result:** Future meaningful AI-assisted changes have a documented workflow
+  for updating `AI.md`.
 
 ### Entry template
 
