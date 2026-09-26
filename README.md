@@ -231,15 +231,18 @@ are outside the current scoreboard API.
 
 ## Thread safety
 
-The in-memory scoreboard is thread-safe within one JVM instance. A single
-private lock protects all public operations, including compound operations such
-as checking team availability, creating a match, registering its teams, and
-assigning its start sequence.
+The in-memory scoreboard is thread-safe within one JVM instance. A fair
+`ReentrantReadWriteLock` allows `getMatch` and `getSummary` to run concurrently,
+while `startMatch`, `updateScore`, and `finishMatch` take the exclusive write
+lock. The write lock protects compound changes such as checking team
+availability, creating a match, registering its teams, and assigning its start
+sequence. Summary sorting and immutable snapshot creation are performed under
+the read lock so each result reflects consistent state.
 
-The same protection applies to score updates, finishing matches, and creating
-the immutable snapshot returned by `getSummary`. This prevents concurrent
-callers from violating team participation, match lifecycle, score, or ordering
-invariants.
+Fair mode prevents newly arriving readers from continually overtaking a
+queued writer, but it does not interrupt readers that already hold the lock or
+guarantee strict priority over every reader already queued. Writes to different
+matches also serialize because the scoreboard's maps and invariants are shared.
 
 Thread safety does not provide persistence or distributed coordination between
 separate scoreboard instances.
@@ -266,12 +269,13 @@ that is disallowed before play restarts, while still rejecting negative scores.
 The trade-off is that the library does not record the goal event history or
 reason for a correction.
 
-### Single lock versus unsynchronized access
+### Fair read/write lock versus a single exclusive lock
 
-A single lock is easy to reason about and protects related state changes as one
-atomic operation. The trade-off is that concurrent operations are serialized.
-The operations are short and in-memory, so this is preferable to exposing
-inconsistent state or relying on callers to synchronize access.
+A fair read/write lock allows concurrent snapshot reads for a read-heavy
+workload and prevents later-arriving readers from indefinitely bypassing a
+waiting writer. Its trade-off is greater locking complexity, and writes still
+serialize across the scoreboard. A single exclusive lock would be simpler but
+would also serialize independent reads.
 
 ### Scoreboard scope versus full football rules
 

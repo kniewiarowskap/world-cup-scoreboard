@@ -301,6 +301,7 @@ Record each meaningful AI-assisted task using the following information:
 | 36 | 2026-09-24 | `README.md`, `football-rules.md`, `AI.md` | Separate project documentation by purpose | Added a README usage example and rules reference, rewrote the football reference as a concise scoped document, and clarified the current API in AI.md | Requested a clearer format and folder decision; kept all files at the repository root and reviewed the documentation diff |
 | 37 | 2026-09-24 | `README.md`, `AI.md` | Document the technology stack and development tools | Added the Java, Maven, JUnit, JaCoCo, GitHub Copilot, and CodeRabbit toolchain to the project documentation | Requested the stack and AI review tools to be documented; reviewed the wording and kept the descriptions aligned with the project configuration |
 | 38 | 2026-09-24 | `README.md`, `AI.md` | Document the distinct fifth-operation commit | Documented that the fifth operation was introduced in a distinct feature commit without preserving a hash after the squash operation | Requested explicit traceability without a stale commit hash; reviewed the documentation diff |
+| 39 | 2026-09-26 | `AI.md`, `README.md`, `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`, `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java` | Review simplification, sorting, concurrency, and fair read locking | Evaluated possible simplifications, confirmed comparator ordering, reviewed the existing fair read/write lock and its documented trade-offs, and identified concurrency-test limitations | Requested analysis and accurate tracking; the fair-lock code and README changes were already present in the working tree, and no source changes were made |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -567,6 +568,27 @@ Record each meaningful AI-assisted task using the following information:
   remains in the README statement.
 - **Result:** The README records the distinct-commit requirement without tying
   it to a superseded hash.
+
+### 39. 2026-09-26 — Review simplification, sorting, concurrency, and fair read locking
+
+- **Area/files:** `AI.md`, `README.md`,
+  `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`,
+  `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`
+- **Prompt or goal:** Assess simplification opportunities, confirm the
+  required summary sorting, review concurrency test coverage, and clarify how
+  the fair read/write lock is used and documented.
+- **AI contribution:** Recommended keeping team-name validation and the
+  `activeTeams` index distinct, described the comparator's descending-total
+  and newest-first tie ordering, reviewed the existing fair read/write lock
+  and its trade-offs, and identified that concurrency tests allow possible
+  non-overlap and classify timeouts as failures.
+- **Developer decision:** Clarified that the fair-lock implementation and
+  README changes were already present in the working tree; requested accurate
+  tracking of that context. No source changes were made during this analysis.
+- **Verification:** Inspected the scoreboard implementation, comparator,
+  README, and concurrency tests. No automated tests were run for this analysis.
+- **Result:** AI.md now records the fair-lock review without attributing the
+  existing code or README changes to this session.
 
 ### Entry template
 
