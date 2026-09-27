@@ -4,7 +4,12 @@ import com.worldcupscoreboard.api.Scoreboard;
 import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
-import com.worldcupscoreboard.model.*;
+import com.worldcupscoreboard.model.MatchId;
+import com.worldcupscoreboard.model.MatchStatus;
+import com.worldcupscoreboard.model.MatchSummary;
+import com.worldcupscoreboard.model.ScoreChange;
+import com.worldcupscoreboard.model.Team;
+import com.worldcupscoreboard.model.TeamSide;
 
 import java.util.HashMap;
 import java.util.List;
