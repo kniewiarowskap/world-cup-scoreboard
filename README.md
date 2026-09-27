@@ -13,7 +13,7 @@ match management, live score updates, and ordered match summaries.
 - GitHub Copilot for development assistance
 - CodeRabbit for automated pull-request reviews in GitHub
 
-## Maven and package structure
+## Project structure
 
 This is a small recruitment project, so the package name is intentionally
 simple:
@@ -22,42 +22,28 @@ simple:
 com.worldcupscoreboard
 ```
 
-The Maven coordinates and source layout are:
+The repository is organized by responsibility:
 
 ```text
 world-cup-scoreboard/
 ├── pom.xml
 ├── README.md
 ├── AI.md
-├── src/
-│   ├── main/java/com/worldcupscoreboard/
-│   │   ├── api/
-│   │   │   └── Scoreboard.java
-│   │   ├── model/
-│   │   │   ├── MatchId.java
-│   │   │   ├── MatchStatus.java
-│   │   │   ├── MatchSummary.java
-│   │   │   ├── Score.java
-│   │   │   └── ...
-│   │   ├── implementation/
-│   │   │   ├── InMemoryScoreboard.java
-│   │   │   ├── MatchState.java
-│   │   │   ├── MatchStateSummaryComparator.java
-│   │   │   └── ScoreUpdateValidator.java
-│   │   └── exception/
-│   │       └── ...
-│   └── test/java/com/worldcupscoreboard/
-│       ├── implementation/
-│       │   ├── InMemoryScoreboardTest.java
-│       │   └── InMemoryScoreboardConcurrencyTest.java
-│       └── model/
-│           └── ScoreTest.java
+└── src/
+    ├── main/java/com/worldcupscoreboard/
+    │   ├── api/
+    │   ├── exception/
+    │   ├── implementation/
+    │   └── model/
+    └── test/java/com/worldcupscoreboard/
+        ├── implementation/
+        └── model/
 ```
 
 The `api` package contains the public interface, `model` contains immutable
 domain types, `implementation` contains the in-memory implementation, and
 `exception` contains domain-specific failures. Tests are organized around
-observable behavior and mirror the relevant production packages.
+observable behavior and grouped by the relevant package.
 
 ## Implemented requirements
 
@@ -112,7 +98,7 @@ The intended public operations are:
 ```java
 MatchId startMatch(String homeTeam, String awayTeam);
 
-void updateScore(MatchId matchId, int homeScore, int awayScore);
+void updateScore(MatchId matchId, TeamSide teamSide, ScoreChange change);
 
 void finishMatch(MatchId matchId);
 
@@ -122,9 +108,16 @@ List<MatchSummary> getSummary();
 
 ```
 
-`MatchId`, `MatchSummary`, and `Score` are domain types. The API uses a
-generated match ID instead of team names because the same teams may play again
-after an earlier match has finished.
+`MatchId`, `MatchSummary`, `Score`, `Team`, `TeamSide`, and `ScoreChange` are
+domain types. `Team` validates names as English letters (A-Z) and spaces only,
+collapses whitespace, and stores the canonical name in uppercase. Value
+equality allows active-team recognition to use `Team` directly as a map key,
+so case or repeated/outer whitespace does not create a different team. The API
+keeps accepting strings for team names; the scoreboard converts them to `Team`
+values internally.
+
+The API uses a generated match ID instead of team names because the same teams
+may play again after an earlier match has finished.
 
 ### Usage example
 
@@ -132,7 +125,7 @@ after an earlier match has finished.
 Scoreboard scoreboard = new InMemoryScoreboard();
 
 MatchId matchId = scoreboard.startMatch("Mexico", "Canada");
-scoreboard.updateScore(matchId, 1, 0);
+scoreboard.updateScore(matchId, TeamSide.HOME, ScoreChange.INCREASE);
 
 MatchSummary liveMatch = scoreboard.getMatch(matchId);
 List<MatchSummary> activeMatches = scoreboard.getSummary();
@@ -147,19 +140,22 @@ active or finished snapshot.
 
 ## Assumptions and domain rules
 
-- Team names cannot be `null` or blank.
+- Team names must contain English letters (A-Z) and spaces only; they cannot
+  be `null` or blank. Names are stored in uppercase with whitespace collapsed.
 - The home and away teams must be different.
 - A team cannot participate in more than one match in progress.
 - A team becomes available for another match after its current match finishes.
-- Team names are normalized consistently for validation and uniqueness checks.
+- Team names with the same letters are treated as the same team regardless of
+  case or whitespace formatting.
 - A generated `MatchId` uniquely identifies a match.
 - Unknown match IDs cause a domain exception.
 - A match has the lifecycle `IN_PROGRESS` followed by `FINISHED`.
-- Scores can be updated only while a match is in progress.
+- Score-change events can be applied only while a match is in progress.
 - A finished match cannot be updated or finished again.
-- Each score update must change exactly one team's regular score by exactly one
-  goal, either increasing it or decreasing it. Decreases represent corrections
-  such as a goal disallowed before play restarts.
+- Each `updateScore(...)` call applies one event to one side: `INCREASE` records
+  a goal and `DECREASE` represents a correction such as a disallowed goal.
+- A score cannot be decreased below zero or increased beyond the supported
+  integer range.
 - A summary contains only matches that are currently in progress.
 - Summary results and domain snapshots are immutable.
 
@@ -181,7 +177,7 @@ recoverable business outcomes that every caller had to handle explicitly. For
 this in-memory library, specific runtime exceptions provide clear failure
 types without adding that obligation.
 
-The score update operation supports one-goal events and corrections to the
+The score update operation applies one-goal events and corrections to the
 current regular score:
 
 ```text
@@ -190,12 +186,16 @@ goal scored: 1 - 0
 goal disallowed: 0 - 0
 ```
 
+The API expresses score changes as events, but the implementation applies them
+directly to the in-memory score and does not retain or replay event history.
 The library does not model the complete Laws of the Game. The relevant football
-rules and their sources are summarized in [`football-rules.md`](football-rules.md).
+rules and their sources are summarized in
+[`football-rules.instructions.md`](.github/instructions/football-rules.instructions.md).
 In particular, this implementation does not include a match clock, halves,
-stoppage time, extra time, or penalty shoot-outs. A score update is accepted while the match is
-`IN_PROGRESS`; the consuming application decides when to call `finishMatch`.
-This keeps the API focused on scoreboard state and lifecycle.
+stoppage time, extra time, or penalty shoot-outs. A score update is accepted
+while the match is `IN_PROGRESS`; the consuming application decides when to
+call `finishMatch`. This keeps the API focused on scoreboard state and
+lifecycle.
 
 ## Match retrieval
 
@@ -207,11 +207,12 @@ reconstruct its state or derive its identifier from the active summary.
 
 The operation is intentionally separate from `getSummary()`: `getSummary()`
 returns all active matches in scoreboard order, while `getMatch(...)` retrieves
-one known match, including finished matches. Callers still use `getSummary()`
-to read an active score before calling `updateScore(...)`. This design was
-chosen for the recruitment task because it demonstrates a useful query
-boundary, reuses the existing immutable `MatchSummary` type, and adds exactly
-one operation without duplicating result-calculation logic.
+one known match, including finished matches. `updateScore(...)` applies a
+single side-specific score-change event, so callers do not need to calculate
+and submit the full new score. This design was chosen for the recruitment task
+because it demonstrates a useful query boundary, reuses the existing immutable
+`MatchSummary` type, and adds exactly one operation without duplicating
+result-calculation logic.
 
 ## Storage and integration boundary
 
@@ -263,12 +264,13 @@ Generated IDs prevent ambiguity when teams play more than once. Team names are
 still stored as display data and used for participation validation, but they
 are not match identity.
 
-### Score replacement versus incremental goals
+### Incremental score changes versus absolute score updates
 
-Replacing the regular score allows a consuming application to correct a goal
-that is disallowed before play restarts, while still rejecting negative scores.
-The trade-off is that the library does not record the goal event history or
-reason for a correction.
+Each update changes one side's score by one goal. A decrease allows a consuming
+application to correct a goal that is disallowed before play restarts, while
+still rejecting negative scores. The trade-off is that callers must submit
+multiple updates to change a score by more than one goal, and the library does
+not retain event history or the reason for a correction.
 
 ### Fair read/write lock versus a single exclusive lock
 

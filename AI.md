@@ -33,11 +33,12 @@ as historical records and are not part of the current production API.
 
 The following materials provide context for the AI-assisted work:
 
-- `task.md` — the text version of the coding exercise requirements;
+- `.github/instructions/task.instructions.md` — the coding exercise
+  requirements;
 - `README.md` — project assumptions, reasoning, trade-offs, API boundary,
   and thread-safety decision;
-- `football-rules.md` — contextual reference for match duration and the
-  treatment of extra time and penalty shoot-outs;
+- `.github/instructions/football-rules.instructions.md` — contextual reference
+  for match duration and the treatment of extra time and penalty shoot-outs;
 - the Java source code, tests, and Maven configuration produced in this
   repository.
 
@@ -303,6 +304,27 @@ Record each meaningful AI-assisted task using the following information:
 | 38 | 2026-09-24 | `README.md`, `AI.md` | Document the distinct fifth-operation commit | Documented that the fifth operation was introduced in a distinct feature commit without preserving a hash after the squash operation | Requested explicit traceability without a stale commit hash; reviewed the documentation diff |
 | 39 | 2026-09-26 | `AI.md`, `README.md`, `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`, `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java` | Review simplification, sorting, concurrency, and fair read locking | Evaluated possible simplifications, confirmed comparator ordering, reviewed the existing fair read/write lock and its documented trade-offs, and identified concurrency-test limitations | Requested analysis and accurate tracking; the fair-lock code and README changes were already present in the working tree, and no source changes were made |
 | 40 | 2026-09-27 | `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`, `src/main/java/com/worldcupscoreboard/implementation/MatchStateSummaryComparator.java`, `README.md`, `AI.md` | Sort scoreboard snapshots outside the read lock | Capture immutable match snapshots and start sequences while locked, then sort after unlocking using the existing separate comparator, adapted to immutable snapshot entries | Requested the suggested optimization and retention of the separate comparator; focused Maven tests passed |
+| 41 | 2026-09-27 | `src/main/java/com/worldcupscoreboard/api/Scoreboard.java`, `src/main/java/com/worldcupscoreboard/implementation/`, `src/main/java/com/worldcupscoreboard/model/`, `src/test/java/com/worldcupscoreboard/implementation/`, `README.md`, `AI.md` | Apply score changes as side-specific events | Changed `updateScore` to accept a team side and increase/decrease event, enforcing active-match state and score bounds; updated tests and usage documentation | Requested an event-driven score update without adding separate public operations; chose a single `updateScore` method and kept event-history persistence outside scope |
+| 42 | 2026-09-27 | `src/main/java/com/worldcupscoreboard/model/Team.java`, `src/main/java/com/worldcupscoreboard/implementation/`, `src/test/java/com/worldcupscoreboard/model/TeamTest.java`, `README.md`, `AI.md` | Centralize team name validation in a value object | Added immutable `Team` values that reject blank names, trim display names, and provide a case-insensitive normalized key used for team identity checks | Requested a team object to store names and perform validation while keeping the public API small |
+| 43 | 2026-09-27 | `src/main/java/com/worldcupscoreboard/implementation/Match.java`, `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`, `src/main/java/com/worldcupscoreboard/implementation/MatchState.java`, `src/main/java/com/worldcupscoreboard/implementation/MatchStateSummaryComparator.java`, `src/main/java/com/worldcupscoreboard/implementation/ScoreUpdateValidator.java`, `src/main/java/com/worldcupscoreboard/model/`, `src/test/java/com/worldcupscoreboard/` | Refactor match and team domain types | Extracted match lifecycle and score transitions into `Match`, added explicit team and score-change types, and removed superseded helper classes | Requested a clearer implementation structure; reviewed the domain rules and test coverage |
+| 44 | 2026-09-27 | `README.md`, `AI.md` | Check README consistency and update AI tracking | Compared README claims and project tree with the current API, source layout, and supporting-file locations; corrected the tree and current artifact paths | Requested a concise, professional review and AI record; reviewed documentation for alignment, with no code behavior changed |
+| 45 | 2026-09-27 | `src/main/java/com/worldcupscoreboard/implementation/Match.java`, `src/main/java/com/worldcupscoreboard/model/Team.java`, `src/main/java/com/worldcupscoreboard/model/TeamSide.java`, `src/main/java/com/worldcupscoreboard/model/ScoreChange.java`, `src/test/java/com/worldcupscoreboard/model/TeamTest.java`, `AI.md` | Record added domain files | Documented each new type's responsibility and corrected the refactor history to match the working tree | Asked which files were created and why, and requested they be staged and recorded; reviewed the file list and rationale |
+| 46 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`, `AI.md` | Keep concurrency tests focused | Removed the weak lifecycle-race test and retained the focused concurrent-start and concurrent-score tests | Challenged the value of the added test; agreed it did not prove enough, removed it, and reran the focused concurrency suite successfully |
+| 47 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`, `AI.md` | Assert concurrent start failures directly | Replaced catch-based Future classification helpers with explicit completion-state checks and a JUnit assertion for the expected asynchronous conflict | Requested that expected exceptions be asserted in the test rather than converted to booleans; reviewed and ran the focused concurrency test |
+| 48 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`, `AI.md` | Simplify concurrent-start test readability | Replaced completion callbacks, a latch, and future selection with `CompletableFuture.allOf` and direct assertions for the conflict and final match count | Requested a readability review and a concise when/then-style test; reviewed the setup/when/assert flow and ran the focused concurrency test |
+| 49 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`, `AI.md` | Add concurrent-start happy path | Added a test that starts two matches with disjoint teams concurrently and asserts both IDs appear in the active summary | Requested a happy-path counterpart to the conflicting-team scenario; reviewed the test's direct outcome assertions and ran the concurrency suite |
+| 50 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`, `AI.md` | Test concurrent scoring on both sides and match finishing | Added tests asserting concurrent home/away updates are all retained and only one concurrent finish succeeds | Selected these additional concurrency cases; reviewed assertions for final scores, lifecycle state, summary exclusion, and team release |
+| 51 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`, `AI.md` | Reject excess concurrent score decreases | Added a test where two concurrent decrease requests compete to remove one remaining goal; it asserts one succeeds, one throws `InvalidMatchException`, and the score ends at zero | Requested coverage that only the available goal can be removed; accepted the focused test after the concurrency suite passed |
+| 52 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/model/TeamTest.java`, `AI.md` | Parameterize team-name validation tests | Replaced repeated normalization and invalid-input assertions with parameterized test cases using `@MethodSource`, `@NullSource`, and `@ValueSource` | Requested implementation of the parameterization proposal; focused `TeamTest` passed |
+| 53 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Parameterize score lower-bound test by team side | Reworked the zero-score decrease test to run for both `TeamSide` values using `@EnumSource` | Requested implementation of the recommended scoreboard-test parameterization; focused `InMemoryScoreboardTest` passed |
+| 54 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Inline selected-score assertion in parameterized test | Removed the one-use `scoreFor` helper and selected the home or away score with a switch in the test; removed the intermediate assertion because the rejected second decrease already verifies the score reached zero | Asked whether score selection could be simplified and called directly in the test; focused scoreboard tests passed |
+| 55 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Make score-changing test setup explicit | Removed the target-score `updateTo` helper and replaced its calls with explicit score events in sorting, correction, and finished-match tests | Requested clearer tests that show what happens; focused `InMemoryScoreboardTest` passed |
+| 56 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Parameterize invalid and active-team start cases | Replaced grouped assertions with separate parameterized tests for invalid team pairs and conflicts with already-active teams | Requested parameterization of the start-validation test; focused `InMemoryScoreboardTest` passed |
+| 57 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Parameterize team-name whitespace normalization | Replaced the single trimming case with data-driven examples covering outer whitespace, repeated internal spaces, tabs, and Unicode whitespace for both team names | Requested parameterization with additional normalization cases; focused `InMemoryScoreboardTest` passed |
+| 58 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Parameterize self-match rejection | Added same-team name pairs with exact, case-only, and whitespace/case variations and asserted that each is rejected as an invalid match | Requested a parameterized self-match test; focused `InMemoryScoreboardTest` passed |
+| 59 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Clarify repeated score setup with loops | Replaced repeated identical score-update calls in the sorting test with loops whose iteration counts show each match's score | Requested loops for repeated identical result updates; focused `InMemoryScoreboardTest` passed |
+| 60 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Test documented five-match summary example | Expanded the ordering test to create all five documented matches, apply their example scores, and assert the complete formatted summary order | Requested test coverage for the README example scenario; focused `InMemoryScoreboardTest` passed |
+| 61 | 2026-09-27 | `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`, `AI.md` | Keep focused and full summary-ordering scenarios | Restored a compact three-match ordering test alongside the five-match documented example test | Asked to retain both ordering tests; focused `InMemoryScoreboardTest` passed |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -609,6 +631,363 @@ Record each meaningful AI-assisted task using the following information:
 - **Result:** Summary requests no longer hold the read lock during sorting;
   ordering remains in the dedicated comparator, and snapshot contents are
   captured consistently.
+
+### 41. 2026-09-27 — Apply score changes as side-specific events
+
+- **Area/files:** `src/main/java/com/worldcupscoreboard/api/Scoreboard.java`,
+  `src/main/java/com/worldcupscoreboard/implementation/`,
+  `src/main/java/com/worldcupscoreboard/model/`,
+  `src/test/java/com/worldcupscoreboard/implementation/`, `README.md`, `AI.md`
+- **Prompt or goal:** Make score updates event-driven without adding more
+  operations than the assignment requires.
+- **AI contribution:** Replaced full-score updates with a single
+  `updateScore(matchId, teamSide, change)` operation, added the `TeamSide` and
+  `ScoreChange` enums, enforced one-goal increments/decrements and score
+  bounds, and updated behavior/concurrency tests and documentation.
+- **Developer decision:** Kept one public score-update method and left
+  event-history persistence outside the library's scope. Recommended deferring
+  a `Team` value object to avoid unnecessary domain-model expansion.
+- **Verification:** Score-event and concurrency tests passed. The broader
+  focused scoreboard run initially exposed that display names retained
+  whitespace; the `Team` value object introduced in entry 42 resolves this.
+- **Result:** Callers can report one team's goal or correction without reading
+  and resubmitting the full score.
+
+### 42. 2026-09-27 — Centralize team name validation in a value object
+
+- **Area/files:** `src/main/java/com/worldcupscoreboard/model/Team.java`,
+  `src/main/java/com/worldcupscoreboard/implementation/`,
+  `src/test/java/com/worldcupscoreboard/model/TeamTest.java`, `README.md`, `AI.md`
+- **Prompt or goal:** Add a team object that stores its name and performs
+  validation.
+- **AI contribution:** Added an immutable `Team` record that validates
+  letter-and-space-only country names, collapses whitespace, and stores the
+  canonical name in uppercase. Wired it through match state and active-team
+  uniqueness checks while preserving the public `startMatch(String, String)`
+  API.
+- **Developer decision:** Accepted uppercase canonical identity and rejected
+  punctuation/digits; kept active-match uniqueness in the scoreboard.
+  `TeamSide` remains the event target selector.
+- **Verification:** The scoreboard, concurrency, `TeamTest`, and `ScoreTest`
+  suites passed.
+- **Result:** Team-name validation and canonical identity now have one domain
+  owner, and summaries expose the canonical uppercase country name.
+
+### 43. 2026-09-27 — Refactor match and team domain types
+
+- **Area/files:** `src/main/java/com/worldcupscoreboard/implementation/Match.java`,
+  `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`,
+  `src/main/java/com/worldcupscoreboard/model/`,
+  `src/test/java/com/worldcupscoreboard/`
+- **Prompt or goal:** Organize match state, score changes, and team-name
+  validation into clear domain responsibilities.
+- **AI contribution:** Extracted match lifecycle and score transitions into
+  package-private `Match`; introduced `Team` for canonical name validation and
+  identity, and `TeamSide`/`ScoreChange` for explicit score-update inputs.
+- **Developer decision:** Kept `InMemoryScoreboard` as the public thread-safe
+  coordinator and kept the new domain types focused on validation and match
+  behavior.
+- **Verification:** Focused scoreboard, model, and concurrency tests were run
+  during implementation.
+- **Result:** Match behavior and team validation have dedicated types rather
+  than `MatchState`, `MatchStateSummaryComparator`, and
+  `ScoreUpdateValidator`; summary ordering is handled by the scoreboard.
+
+### 44. 2026-09-27 — Review README consistency and update AI tracking
+
+- **Area/files:** `README.md`, `AI.md`
+- **Prompt or goal:** Check README claims against the current implementation
+  and add a concise AI usage record.
+- **AI contribution:** Reviewed the API, domain rules, repository layout, and
+  supporting-document paths; corrected the README tree and updated the
+  context section's artifact paths.
+- **Developer decision:** Requested a short, professional audit and tracking
+  entry, keeping historical prompt records intact.
+- **Verification:** Compared the documentation with current source paths and
+  public API; no application code changed.
+- **Result:** Current documentation paths and repository structure are
+  accurately represented, with the review recorded in both AI history sections.
+
+### 45. 2026-09-27 — Record added domain files
+
+- **Area/files:** `src/main/java/com/worldcupscoreboard/implementation/Match.java`,
+  `src/main/java/com/worldcupscoreboard/model/Team.java`,
+  `src/main/java/com/worldcupscoreboard/model/TeamSide.java`,
+  `src/main/java/com/worldcupscoreboard/model/ScoreChange.java`,
+  `src/test/java/com/worldcupscoreboard/model/TeamTest.java`, `AI.md`
+- **Prompt or goal:** Identify untracked files, explain their purpose, stage
+  them, and record the work in AI tracking.
+- **AI contribution:** Matched each file to its responsibility: `Match` owns
+  match state and lifecycle; `Team` validates and canonicalizes names;
+  `TeamSide` selects the side to update; `ScoreChange` represents a one-goal
+  increase or correction; `TeamTest` covers team-name behavior.
+- **Developer decision:** Requested the new files be added to Git and their
+  rationale recorded; existing unrelated changes remain unstaged.
+- **Verification:** Compared the file list with the source tree and reviewed
+  the updated AI history for matching numbering and scope.
+- **Result:** The added files and their purposes are documented and staged.
+
+### 46. 2026-09-27 — Keep concurrency tests focused
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`,
+  `AI.md`
+- **Prompt or goal:** Reassess whether a concurrent lifecycle-race test
+  provides enough value to retain.
+- **AI contribution:** Reviewed the barrier-based test and identified that
+  its assertions did not establish a strong lifecycle guarantee.
+- **Developer decision:** Removed the weak race test and kept focused tests
+  for concurrent team claiming and score updates.
+- **Verification:** Reran `InMemoryScoreboardConcurrencyTest` successfully.
+- **Result:** The concurrency suite avoids a weak timing/interleaving test and
+  retains tests with direct, meaningful assertions.
+
+### 47. 2026-09-27 — Assert concurrent start failures directly
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`,
+  `AI.md`
+- **Prompt or goal:** Remove helpers that catch and convert future failures
+  into boolean results; assert the expected conflict as part of the test.
+- **AI contribution:** Reworked concurrent start assertions to inspect which
+  `CompletableFuture` completed exceptionally and use `assertThrows` to verify
+  the `CompletionException` wraps `TeamAlreadyPlayingException`.
+- **Developer decision:** Requested that expected failures be visible as test
+  assertions instead of being caught and classified by helper methods.
+- **Verification:** Ran the focused concurrency test and checked the diff for
+  formatting and residual catch helpers.
+- **Result:** The test directly states the expected asynchronous exception,
+  and both exception-classification helper methods were removed.
+
+### 48. 2026-09-27 — Simplify concurrent-start test readability
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`,
+  `AI.md`
+- **Prompt or goal:** Improve the concurrent-start test's readability and
+  consider a when/then-style structure without adding test dependencies.
+- **AI contribution:** Simplified the test to start both attempts, await their
+  completion with `CompletableFuture.allOf`, assert the expected team conflict,
+  and verify only one match appears in the summary.
+- **Developer decision:** Requested a readable test and accepted direct JUnit
+  assertions with explicit setup, concurrent action, and outcome verification.
+- **Verification:** Ran the focused concurrency test and checked the
+  documentation and test diffs.
+- **Result:** Removed callback bookkeeping, the completion latch, and
+  conditional future selection while preserving the concurrency assertions.
+
+### 49. 2026-09-27 — Add concurrent-start happy path
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`,
+  `AI.md`
+- **Prompt or goal:** Add a happy-path test alongside the concurrent-start
+  test that expects a shared-team conflict.
+- **AI contribution:** Added two concurrent match starts using distinct teams,
+  awaited both operations, and asserted that both generated match IDs appear
+  in the active summary.
+- **Developer decision:** Requested direct coverage of concurrent successful
+  starts where there is no team conflict.
+- **Verification:** Ran the focused concurrency test suite and checked the
+  diff for formatting.
+- **Result:** Concurrent starts now cover both allowed independent matches
+  and the rejected shared-team case.
+
+### 50. 2026-09-27 — Test concurrent scoring and finishing
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`,
+  `AI.md`
+- **Prompt or goal:** Add focused concurrency coverage for simultaneous
+  updates to both teams and two callers finishing the same match.
+- **AI contribution:** Added assertions that all home and away score updates
+  are retained and that concurrent finish calls produce one successful
+  transition and one `InvalidMatchStateException`.
+- **Developer decision:** Selected both suggested lifecycle and score-update
+  cases for additional confidence in the scoreboard's write-lock guarantees.
+- **Verification:** Ran the focused concurrency test suite and checked the
+  AI-history entry against the tests.
+- **Result:** The concurrency tests now cover independent starts, conflicting
+  starts, updates to both score sides, and competing finish operations.
+
+### 51. 2026-09-27 — Reject excess concurrent score decreases
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java`,
+  `AI.md`
+- **Prompt or goal:** Cover two callers concurrently decreasing a team's score
+  when only one goal remains, so only one decrease can succeed.
+- **AI contribution:** Added a test that starts with one home goal, submits
+  two concurrent decreases, checks that one fails with
+  `InvalidMatchException`, and verifies the final score is zero.
+- **Developer decision:** Requested the concurrency boundary case to confirm
+  that a score cannot be decreased below zero when updates compete.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardConcurrencyTest" test`
+  successfully.
+- **Result:** The concurrency suite now verifies that only the available goal
+  can be removed by competing decreases.
+
+### 52. 2026-09-27 — Parameterize team-name validation tests
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/model/TeamTest.java`,
+  `AI.md`
+- **Prompt or goal:** Apply the proposed parameterization to the `TeamTest`
+  normalization and invalid-name cases.
+- **AI contribution:** Added parameterized valid-name cases using
+  `@MethodSource` and invalid-name cases using `@NullSource` and
+  `@ValueSource`, preserving assertions for canonical names, equality, and
+  rejected inputs.
+- **Developer decision:** Requested the test refactor after reviewing the
+  parameterization analysis.
+- **Verification:** Ran `mvn -q "-Dtest=TeamTest" test` successfully.
+- **Result:** `TeamTest` expresses its repeated input/output cases as
+  parameterized tests while keeping normalization and rejection concerns
+  separate.
+
+### 53. 2026-09-27 — Parameterize score lower-bound test by team side
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Apply the recommended parameterization to test that
+  neither home nor away score can be decreased below zero.
+- **AI contribution:** Converted the lower-bound test to a parameterized
+  test with `@EnumSource(TeamSide.class)` and asserted the selected side's
+  score before and after the rejected decrease.
+- **Developer decision:** Requested implementation of the parameterization
+  identified in the review.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** The same lower-bound behavior is now tested for both team sides
+  without duplicating the scenario.
+
+### 54. 2026-09-27 — Inline selected-score assertion in parameterized test
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Simplify the selected-side score lookup and call it
+  directly from the parameterized test.
+- **AI contribution:** Removed the one-use `scoreFor` helper, captured the
+  final match snapshot, and selected the home or away score with a switch
+  expression in the test. Removed the redundant pre-exception score
+  assertion: the failed decrease establishes that the score was zero, and
+  the final assertion verifies it remained zero.
+- **Developer decision:** Requested direct score selection in the test rather
+  than a separate helper.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** The test now contains its own small side-selection logic and
+  asserts that a rejected decrease leaves the selected score at zero.
+
+### 55. 2026-09-27 — Make score-changing test setup explicit
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Simplify `updateTo` because its score-difference loops
+  obscure which score events each test performs.
+- **AI contribution:** Removed the helper and replaced its usages with direct
+  `updateScore` calls that show the team side and increase/decrease event in
+  each scenario.
+- **Developer decision:** Requested test setup that makes the score changes
+  visible directly, rather than hiding them behind a helper that moves scores
+  to arbitrary targets.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** The sorting, correction, and finished-snapshot tests now show
+  their score-event sequences inline; the opaque target-score helper is gone.
+
+### 56. 2026-09-27 — Parameterize invalid and active-team start cases
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Parameterize the test covering invalid team inputs and
+  attempts to start matches with teams already active elsewhere.
+- **AI contribution:** Split the mixed test into parameterized tests for
+  invalid home/away pairs and active-team conflicts, with named `@MethodSource`
+  data providers. This keeps the different expected exception types and
+  preconditions separate while removing repeated assertion structure.
+- **Developer decision:** Requested parameterization of the start-validation
+  scenarios.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** Invalid team input and duplicate-active-team cases now run as
+  distinct parameterized scenarios.
+
+### 57. 2026-09-27 — Parameterize team-name whitespace normalization
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Parameterize the team-name trimming test and add more
+  whitespace normalization examples.
+- **AI contribution:** Replaced the single example with a `@MethodSource`
+  parameterized test that checks expected canonical names for both teams,
+  covering surrounding whitespace, repeated spaces, tabs, and Unicode
+  whitespace.
+- **Developer decision:** Requested additional cases in the parameterized
+  normalization test.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** The scoreboard tests now verify team-name whitespace
+  normalization across multiple input forms.
+
+### 58. 2026-09-27 — Parameterize self-match rejection
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Add a parameterized test ensuring a team cannot play
+  against itself when the two names use equivalent spellings.
+- **AI contribution:** Added a `@MethodSource` test for identical names,
+  case-only differences, and case/whitespace differences; moved the
+  case/whitespace duplicate from the generic invalid-pairs test to this
+  focused self-match test.
+- **Developer decision:** Requested a parameterized test using the same team
+  name in both match positions.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** Self-match rejection is explicitly tested for exact and
+  normalized-equivalent team names.
+
+### 59. 2026-09-27 — Clarify repeated score setup with loops
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Replace repeated same-score updates in the ordering test
+  with loops where doing so improves clarity.
+- **AI contribution:** Replaced five repeated away-goal updates with a
+  five-iteration loop; changed the tied-score setups to two iterations that
+  each score once for home and once for away.
+- **Developer decision:** Requested loop-based setup for repeated results while
+  retaining explicit side and event information in each loop body.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** The ordering scenario now makes each match's intended score
+  easier to see from the concise loop bounds.
+
+### 60. 2026-09-27 — Test documented five-match summary example
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Add a test for the five matches, scores, and expected
+  summary order shown in the task example.
+- **AI contribution:** Expanded the summary-order test to start all five
+  matches in the specified order, apply the requested scores, and compare the
+  full ordered team-and-score descriptions against the expected list.
+- **Developer decision:** Requested direct test coverage of the specified
+  example data and result ordering.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** The complete example now verifies both total-score ordering and
+  recency ordering for ties in one integration test.
+
+### 61. 2026-09-27 — Keep focused and full summary-ordering scenarios
+
+- **Area/files:** `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardTest.java`,
+  `AI.md`
+- **Prompt or goal:** Keep the original focused ordering test as well as the
+  new full five-match example test.
+- **AI contribution:** Restored a three-match test that isolates descending
+  total-score ordering and latest-start tie-breaking; retained the five-match
+  example test to cover the complete documented data set and expected output.
+- **Developer decision:** Requested both scenarios remain covered. Kept them
+  as separate tests because the compact test isolates the ordering rule while
+  the example test verifies the full requirement data.
+- **Verification:** Ran `mvn -q "-Dtest=InMemoryScoreboardTest" test`
+  successfully.
+- **Result:** Summary ordering has focused rule-level coverage and full
+  example-level coverage.
 
 ### Entry template
 

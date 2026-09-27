@@ -1,6 +1,7 @@
 package com.worldcupscoreboard.model;
 
-import java.util.Objects;
+import static java.util.Objects.requireNonNull;
+
 import java.util.UUID;
 
 /**
@@ -10,7 +11,7 @@ import java.util.UUID;
  */
 public record MatchId(UUID value) {
     public MatchId {
-        Objects.requireNonNull(value, "value must not be null");
+        requireNonNull(value, "value must not be null");
     }
 
     /**
