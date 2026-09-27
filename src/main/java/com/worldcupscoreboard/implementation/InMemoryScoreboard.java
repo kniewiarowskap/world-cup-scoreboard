@@ -13,10 +13,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /** Thread-safe in-memory implementation of the scoreboard API. */
 public final class InMemoryScoreboard implements Scoreboard {
-    private final Object lock = new Object();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
+    private final Lock readLock = lock.readLock();
+    private final Lock writeLock = lock.writeLock();
     private final Map<MatchId, MatchState> matches = new HashMap<>();
     private final Map<String, MatchId> activeTeams = new HashMap<>();
     private long nextStartSequence;
@@ -31,7 +35,8 @@ public final class InMemoryScoreboard implements Scoreboard {
             throw new InvalidMatchException("Home and away teams must be different");
         }
 
-        synchronized (lock) {
+        writeLock.lock();
+        try {
             ensureTeamAvailable(home, normalizedHome);
             ensureTeamAvailable(away, normalizedAway);
             MatchId matchId = MatchId.generate();
@@ -41,43 +46,63 @@ public final class InMemoryScoreboard implements Scoreboard {
             activeTeams.put(normalizedHome, matchId);
             activeTeams.put(normalizedAway, matchId);
             return matchId;
+        } finally {
+            writeLock.unlock();
         }
     }
 
     @Override
     public void updateScore(MatchId matchId, int homeScore, int awayScore) {
-        synchronized (lock) {
+        writeLock.lock();
+        try {
             MatchState match = requireMatch(matchId);
             match.updateScore(new Score(homeScore, awayScore));
+        } finally {
+            writeLock.unlock();
         }
     }
 
     @Override
     public void finishMatch(MatchId matchId) {
-        synchronized (lock) {
+        writeLock.lock();
+        try {
             MatchState match = requireMatch(matchId);
             match.finish();
             activeTeams.remove(normalize(match.homeTeam));
             activeTeams.remove(normalize(match.awayTeam));
+        } finally {
+            writeLock.unlock();
         }
     }
 
     @Override
     public MatchSummary getMatch(MatchId matchId) {
-        synchronized (lock) {
+        readLock.lock();
+        try {
             return requireMatch(matchId).summary();
+        } finally {
+            readLock.unlock();
         }
     }
 
     @Override
     public List<MatchSummary> getSummary() {
-        synchronized (lock) {
-            return matches.values().stream()
+        List<MatchStateSummaryComparator.SummaryEntry> snapshot;
+        readLock.lock();
+        try {
+            snapshot = matches.values().stream()
                     .filter(match -> match.status == MatchStatus.IN_PROGRESS)
-                    .sorted(MatchStateSummaryComparator.INSTANCE)
-                    .map(MatchState::summary)
+                    .map(match -> new MatchStateSummaryComparator.SummaryEntry(
+                            match.summary(), match.startSequence))
                     .toList();
+        } finally {
+            readLock.unlock();
         }
+
+        return snapshot.stream()
+                .sorted(MatchStateSummaryComparator.INSTANCE)
+                .map(MatchStateSummaryComparator.SummaryEntry::summary)
+                .toList();
     }
 
     private void ensureTeamAvailable(String displayName, String normalizedName) {
