@@ -6,21 +6,22 @@ import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
 import com.worldcupscoreboard.model.MatchId;
 import com.worldcupscoreboard.model.MatchSummary;
+import com.worldcupscoreboard.model.ScoreChange;
+import com.worldcupscoreboard.model.TeamSide;
 
 import java.util.List;
 
 /**
  * Manages live football matches and their current scores.
- *
- * <p>Implementations must expose only matches that are currently in progress
- * from {@link #getSummary()} and preserve the documented summary ordering.</p>
  */
 public interface Scoreboard {
     /**
      * Starts a new match at a score of {@code 0-0}.
      *
-     * @param homeTeam the home team name; it must not be blank
-     * @param awayTeam the away team name; it must not be blank or equal to the home team
+     * @param homeTeam the home country name; it must contain only English
+     *        letters and spaces and must not be blank
+     * @param awayTeam the away country name; it must contain only English
+     *        letters and spaces, must not be blank, and must differ from the home team
      * @return the generated identifier for the new match
      * @throws InvalidMatchException if either name is invalid
      * @throws TeamAlreadyPlayingException if either team is active
@@ -28,20 +29,20 @@ public interface Scoreboard {
     MatchId startMatch(String homeTeam, String awayTeam);
 
     /**
-     * Replaces the current score with a valid one-goal transition.
+     * Applies one score-change event to the selected team.
      *
-     * <p>Exactly one team's score must change by one goal. A one-goal decrease
-     * is allowed to represent a correction, such as a disallowed goal.</p>
+     * <p>An increase records a goal; a decrease represents a correction, such
+     * as a disallowed goal. A team's score cannot be decreased below zero.</p>
      *
      * @param matchId the match to update
-     * @param homeScore the new home-team score
-     * @param awayScore the new away-team score
+     * @param teamSide the side whose score changes
+     * @param change whether to increase or decrease that side's score
      * @throws MatchNotFoundException if the match is unknown
      * @throws InvalidMatchStateException if the match is finished
-     * @throws InvalidMatchException if the transition is invalid
-     * @throws IllegalArgumentException if either score is negative
+     * @throws InvalidMatchException if either event argument is null or the
+     *         change would make the score negative or exceed its supported range
      */
-    void updateScore(MatchId matchId, int homeScore, int awayScore);
+    void updateScore(MatchId matchId, TeamSide teamSide, ScoreChange change);
 
     /**
      * Finishes a match and releases both teams for future matches.

@@ -1,8 +1,9 @@
 package com.worldcupscoreboard.implementation;
 
-import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
 import com.worldcupscoreboard.model.MatchId;
+import com.worldcupscoreboard.model.ScoreChange;
+import com.worldcupscoreboard.model.TeamSide;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ class InMemoryScoreboardConcurrencyTest {
     }
 
     @Test
-    void serializesConcurrentScoreUpdatesWithoutAcceptingDuplicateEvents() throws Exception {
+    void serializesConcurrentScoreEvents() throws Exception {
         InMemoryScoreboard board = new InMemoryScoreboard();
         MatchId matchId = board.startMatch("Mexico", "Canada");
         int updates = 100;
@@ -44,35 +45,16 @@ class InMemoryScoreboardConcurrencyTest {
             List<Callable<Void>> tasks = new ArrayList<>();
             for (int i = 0; i < updates; i++) {
                 tasks.add(() -> {
-                    board.updateScore(matchId, 1, 0);
+                    board.updateScore(matchId, TeamSide.HOME, ScoreChange.INCREASE);
                     return null;
                 });
             }
             results = executor.invokeAll(tasks);
         }
-        long successfulUpdates = 0;
         for (Future<Void> result : results) {
-            if (completedScoreUpdate(result)) {
-                successfulUpdates++;
-            }
-        }
-        assertEquals(1, successfulUpdates);
-        assertEquals(1, board.getSummary().getFirst().homeScore());
-    }
-
-    private boolean completedScoreUpdate(Future<Void> result) {
-        try {
             result.get(1, TimeUnit.SECONDS);
-            return true;
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new AssertionError("Test interrupted", exception);
-        } catch (ExecutionException exception) {
-            assertInstanceOf(InvalidMatchException.class, exception.getCause());
-            return false;
-        } catch (TimeoutException exception) {
-            return false;
         }
+        assertEquals(updates, board.getSummary().getFirst().homeScore());
     }
 
     private boolean completedSuccessfully(Future<MatchId> result) {

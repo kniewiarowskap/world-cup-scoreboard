@@ -7,6 +7,8 @@ import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
 import com.worldcupscoreboard.model.MatchId;
 import com.worldcupscoreboard.model.MatchStatus;
 import com.worldcupscoreboard.model.MatchSummary;
+import com.worldcupscoreboard.model.ScoreChange;
+import com.worldcupscoreboard.model.TeamSide;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,8 +25,8 @@ class InMemoryScoreboardTest {
         var summary = board.getSummary();
         assertEquals(1, summary.size());
         assertEquals(matchId, summary.getFirst().matchId());
-        assertEquals("Mexico", summary.getFirst().homeTeam());
-        assertEquals("Canada", summary.getFirst().awayTeam());
+        assertEquals("MEXICO", summary.getFirst().homeTeam());
+        assertEquals("CANADA", summary.getFirst().awayTeam());
         assertEquals(0, summary.getFirst().totalScore());
         assertEquals(MatchStatus.IN_PROGRESS, summary.getFirst().status());
     }
@@ -42,6 +44,8 @@ class InMemoryScoreboardTest {
         assertThrows(TeamAlreadyPlayingException.class, () -> board.startMatch("MEXICO", "CANADA"));
         assertThrows(TeamAlreadyPlayingException.class,
                 () -> board.startMatch("\u2003MEXICO\u2003", "Spain"));
+        assertThrows(InvalidMatchException.class,
+                () -> board.startMatch("Congo-DR", "Spain"));
     }
 
     @Test
@@ -51,8 +55,8 @@ class InMemoryScoreboardTest {
 
         var summary = board.getSummary().getFirst();
 
-        assertEquals("Mexico", summary.homeTeam());
-        assertEquals("Canada", summary.awayTeam());
+        assertEquals("MEXICO", summary.homeTeam());
+        assertEquals("CANADA", summary.awayTeam());
     }
 
     @Test
@@ -72,11 +76,12 @@ class InMemoryScoreboardTest {
     void finishesMatchMakesTeamsAvailable() {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("Mexico", "Canada");
-        board.updateScore(matchId, 1, 0);
+        board.updateScore(matchId, TeamSide.HOME, ScoreChange.INCREASE);
         board.finishMatch(matchId);
         assertEquals(List.of(), board.getSummary());
         board.startMatch("Canada", "Spain");
-        assertThrows(InvalidMatchStateException.class, () -> board.updateScore(matchId, 1, 1));
+        assertThrows(InvalidMatchStateException.class,
+                () -> board.updateScore(matchId, TeamSide.AWAY, ScoreChange.INCREASE));
         assertThrows(InvalidMatchStateException.class, () -> board.finishMatch(matchId));
     }
 
@@ -94,24 +99,38 @@ class InMemoryScoreboardTest {
     }
 
     @Test
-    void rejectsUpdatesThatChangeBothTeamsOrMoreThanOneGoal() {
+    void rejectsInvalidScoreChangeEvents() {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("A", "B");
-        assertThrows(InvalidMatchException.class, () -> board.updateScore(matchId, 0, 0));
-        assertThrows(InvalidMatchException.class, () -> board.updateScore(matchId, 1, 1));
-        assertThrows(InvalidMatchException.class, () -> board.updateScore(matchId, 2, 0));
-        board.updateScore(matchId, 1, 0);
-        assertThrows(InvalidMatchException.class, () -> board.updateScore(matchId, 0, 1));
+        assertThrows(InvalidMatchException.class,
+                () -> board.updateScore(matchId, TeamSide.HOME, ScoreChange.DECREASE));
+        assertThrows(InvalidMatchException.class,
+                () -> board.updateScore(matchId, null, ScoreChange.INCREASE));
+        assertThrows(InvalidMatchException.class,
+                () -> board.updateScore(matchId, TeamSide.AWAY, null));
     }
 
     @Test
-    void rejectsUnknownMatchesAndInvalidScores() {
+    void doesNotAllowScoreToFallBelowZero() {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("A", "B");
-        assertThrows(MatchNotFoundException.class, () -> board.updateScore(null, 0, 0));
+
+        board.updateScore(matchId, TeamSide.HOME, ScoreChange.INCREASE);
+        board.updateScore(matchId, TeamSide.HOME, ScoreChange.DECREASE);
+
+        assertEquals(0, board.getMatch(matchId).homeScore());
+        assertThrows(InvalidMatchException.class,
+                () -> board.updateScore(matchId, TeamSide.HOME, ScoreChange.DECREASE));
+        assertEquals(0, board.getMatch(matchId).homeScore());
+    }
+
+    @Test
+    void rejectsUnknownMatchesForScoreUpdates() {
+        InMemoryScoreboard board = new InMemoryScoreboard();
+        var matchId = board.startMatch("A", "B");
+        assertThrows(MatchNotFoundException.class,
+                () -> board.updateScore(null, TeamSide.HOME, ScoreChange.INCREASE));
         assertThrows(MatchNotFoundException.class, () -> board.finishMatch(null));
-        assertThrows(IllegalArgumentException.class, () -> board.updateScore(matchId, -1, 0));
-        assertThrows(IllegalArgumentException.class, () -> board.updateScore(matchId, 0, -1));
     }
 
     @Test
@@ -119,7 +138,7 @@ class InMemoryScoreboardTest {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("A", "B");
         var snapshot = board.getSummary();
-        board.updateScore(matchId, 1, 0);
+        board.updateScore(matchId, TeamSide.HOME, ScoreChange.INCREASE);
         assertEquals(0, snapshot.getFirst().totalScore());
         assertThrows(UnsupportedOperationException.class, snapshot::clear);
     }
@@ -144,7 +163,7 @@ class InMemoryScoreboardTest {
     void retrievesActiveMatchSnapshot() {
         InMemoryScoreboard board = new InMemoryScoreboard();
         var matchId = board.startMatch("A", "B");
-        board.updateScore(matchId, 1, 0);
+        board.updateScore(matchId, TeamSide.HOME, ScoreChange.INCREASE);
 
         var match = board.getMatch(matchId);
         assertEquals(1, match.homeScore());
@@ -165,19 +184,22 @@ class InMemoryScoreboardTest {
             com.worldcupscoreboard.model.MatchId matchId,
             int homeScore,
             int awayScore) {
-        int currentHome = board.getSummary().stream()
-                .filter(summary -> summary.matchId().equals(matchId))
-                .findFirst().orElseThrow().homeScore();
-        int currentAway = board.getSummary().stream()
-                .filter(summary -> summary.matchId().equals(matchId))
-                .findFirst().orElseThrow().awayScore();
+        MatchSummary current = board.getMatch(matchId);
+        int currentHome = current.homeScore();
+        int currentAway = current.awayScore();
         while (currentHome != homeScore) {
+            ScoreChange change = homeScore > currentHome
+                    ? ScoreChange.INCREASE
+                    : ScoreChange.DECREASE;
+            board.updateScore(matchId, TeamSide.HOME, change);
             currentHome += Integer.signum(homeScore - currentHome);
-            board.updateScore(matchId, currentHome, currentAway);
         }
         while (currentAway != awayScore) {
+            ScoreChange change = awayScore > currentAway
+                    ? ScoreChange.INCREASE
+                    : ScoreChange.DECREASE;
+            board.updateScore(matchId, TeamSide.AWAY, change);
             currentAway += Integer.signum(awayScore - currentAway);
-            board.updateScore(matchId, currentHome, currentAway);
         }
     }
 }

@@ -4,47 +4,42 @@ import com.worldcupscoreboard.api.Scoreboard;
 import com.worldcupscoreboard.exception.InvalidMatchException;
 import com.worldcupscoreboard.exception.MatchNotFoundException;
 import com.worldcupscoreboard.exception.TeamAlreadyPlayingException;
-import com.worldcupscoreboard.model.MatchId;
-import com.worldcupscoreboard.model.MatchStatus;
-import com.worldcupscoreboard.model.MatchSummary;
-import com.worldcupscoreboard.model.Score;
+import com.worldcupscoreboard.model.*;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/** Thread-safe in-memory implementation of the scoreboard API. */
+/**
+ * Thread-safe in-memory implementation of the scoreboard API.
+ */
 public final class InMemoryScoreboard implements Scoreboard {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
-    private final Map<MatchId, MatchState> matches = new HashMap<>();
-    private final Map<String, MatchId> activeTeams = new HashMap<>();
+    private final Map<MatchId, Match> matches = new HashMap<>();
+    private final Map<Team, MatchId> activeTeams = new HashMap<>();
     private long nextStartSequence;
 
     @Override
     public MatchId startMatch(String homeTeam, String awayTeam) {
-        String home = validateTeam(homeTeam);
-        String away = validateTeam(awayTeam);
-        String normalizedHome = normalize(home);
-        String normalizedAway = normalize(away);
-        if (normalizedHome.equals(normalizedAway)) {
+        Team home = new Team(homeTeam);
+        Team away = new Team(awayTeam);
+
+        if (home.equals(away)) {
             throw new InvalidMatchException("Home and away teams must be different");
         }
 
         writeLock.lock();
         try {
-            ensureTeamAvailable(home, normalizedHome);
-            ensureTeamAvailable(away, normalizedAway);
-            MatchId matchId = MatchId.generate();
-            MatchState match = new MatchState(
-                    matchId, home, away, nextStartSequence++, new Score(0, 0));
+            ensureTeamsAvailable(home, away);
+            Match match = new Match(home, away, nextStartSequence++);
+            MatchId matchId = match.matchId;
             matches.put(matchId, match);
-            activeTeams.put(normalizedHome, matchId);
-            activeTeams.put(normalizedAway, matchId);
+            activeTeams.put(home, matchId);
+            activeTeams.put(away, matchId);
             return matchId;
         } finally {
             writeLock.unlock();
@@ -52,11 +47,11 @@ public final class InMemoryScoreboard implements Scoreboard {
     }
 
     @Override
-    public void updateScore(MatchId matchId, int homeScore, int awayScore) {
+    public void updateScore(MatchId matchId, TeamSide teamSide, ScoreChange change) {
         writeLock.lock();
         try {
-            MatchState match = requireMatch(matchId);
-            match.updateScore(new Score(homeScore, awayScore));
+            Match match = requireMatch(matchId);
+            match.updateScore(teamSide, change);
         } finally {
             writeLock.unlock();
         }
@@ -66,10 +61,10 @@ public final class InMemoryScoreboard implements Scoreboard {
     public void finishMatch(MatchId matchId) {
         writeLock.lock();
         try {
-            MatchState match = requireMatch(matchId);
+            Match match = requireMatch(matchId);
             match.finish();
-            activeTeams.remove(normalize(match.homeTeam));
-            activeTeams.remove(normalize(match.awayTeam));
+            activeTeams.remove(match.homeTeam);
+            activeTeams.remove(match.awayTeam);
         } finally {
             writeLock.unlock();
         }
@@ -87,45 +82,52 @@ public final class InMemoryScoreboard implements Scoreboard {
 
     @Override
     public List<MatchSummary> getSummary() {
-        List<MatchStateSummaryComparator.SummaryEntry> snapshot;
+        return snapshotActiveMatches().stream()
+                .sorted(InMemoryScoreboard::compareSnapshots)
+                .map(SummarySnapshot::summary)
+                .toList();
+    }
+
+    private List<SummarySnapshot> snapshotActiveMatches() {
+        List<SummarySnapshot> snapshot;
         readLock.lock();
         try {
             snapshot = matches.values().stream()
                     .filter(match -> match.status == MatchStatus.IN_PROGRESS)
-                    .map(match -> new MatchStateSummaryComparator.SummaryEntry(
-                            match.summary(), match.startSequence))
+                    .map(match -> new SummarySnapshot(match.summary(), match.startSequence))
                     .toList();
         } finally {
             readLock.unlock();
         }
-
-        return snapshot.stream()
-                .sorted(MatchStateSummaryComparator.INSTANCE)
-                .map(MatchStateSummaryComparator.SummaryEntry::summary)
-                .toList();
+        return snapshot;
     }
 
-    private void ensureTeamAvailable(String displayName, String normalizedName) {
-        if (activeTeams.containsKey(normalizedName)) {
-            throw new TeamAlreadyPlayingException(displayName);
+    private static int compareSnapshots(SummarySnapshot first, SummarySnapshot second) {
+        int scoreOrder = Integer.compare(
+                second.summary().totalScore(),
+                first.summary().totalScore());
+        if (scoreOrder != 0) {
+            return scoreOrder;
+        }
+        return Long.compare(second.startSequence(), first.startSequence());
+    }
+
+    private void ensureTeamsAvailable(Team team1, Team team2) {
+        if (activeTeams.containsKey(team1)) {
+            throw new TeamAlreadyPlayingException(team1.name());
+        }
+        if (activeTeams.containsKey(team2)) {
+            throw new TeamAlreadyPlayingException(team2.name());
         }
     }
 
-    private MatchState requireMatch(MatchId matchId) {
+    private Match requireMatch(MatchId matchId) {
         if (matchId == null || !matches.containsKey(matchId)) {
             throw new MatchNotFoundException(matchId);
         }
         return matches.get(matchId);
     }
 
-    private static String validateTeam(String team) {
-        if (team == null || team.isBlank()) {
-            throw new InvalidMatchException("Team name must not be blank");
-        }
-        return team.strip();
-    }
-
-    private static String normalize(String team) {
-        return team.toLowerCase(Locale.ROOT);
+    private record SummarySnapshot(MatchSummary summary, long startSequence) {
     }
 }
