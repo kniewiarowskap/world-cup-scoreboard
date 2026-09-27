@@ -302,6 +302,7 @@ Record each meaningful AI-assisted task using the following information:
 | 37 | 2026-09-24 | `README.md`, `AI.md` | Document the technology stack and development tools | Added the Java, Maven, JUnit, JaCoCo, GitHub Copilot, and CodeRabbit toolchain to the project documentation | Requested the stack and AI review tools to be documented; reviewed the wording and kept the descriptions aligned with the project configuration |
 | 38 | 2026-09-24 | `README.md`, `AI.md` | Document the distinct fifth-operation commit | Documented that the fifth operation was introduced in a distinct feature commit without preserving a hash after the squash operation | Requested explicit traceability without a stale commit hash; reviewed the documentation diff |
 | 39 | 2026-09-26 | `AI.md`, `README.md`, `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`, `src/test/java/com/worldcupscoreboard/implementation/InMemoryScoreboardConcurrencyTest.java` | Review simplification, sorting, concurrency, and fair read locking | Evaluated possible simplifications, confirmed comparator ordering, reviewed the existing fair read/write lock and its documented trade-offs, and identified concurrency-test limitations | Requested analysis and accurate tracking; the fair-lock code and README changes were already present in the working tree, and no source changes were made |
+| 40 | 2026-09-27 | `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`, `src/main/java/com/worldcupscoreboard/implementation/MatchStateSummaryComparator.java`, `README.md`, `AI.md` | Sort scoreboard snapshots outside the read lock | Capture immutable match snapshots and start sequences while locked, then sort after unlocking using the existing separate comparator, adapted to immutable snapshot entries | Requested the suggested optimization and retention of the separate comparator; focused Maven tests passed |
 
 ### 16. 2026-09-23 — Enforce one-goal score transitions
 
@@ -589,6 +590,25 @@ Record each meaningful AI-assisted task using the following information:
   README, and concurrency tests. No automated tests were run for this analysis.
 - **Result:** AI.md now records the fair-lock review without attributing the
   existing code or README changes to this session.
+
+### 40. 2026-09-27 — Sort scoreboard snapshots outside the read lock
+
+- **Area/files:** `src/main/java/com/worldcupscoreboard/implementation/InMemoryScoreboard.java`,
+  `src/main/java/com/worldcupscoreboard/implementation/MatchStateSummaryComparator.java`,
+  `README.md`, `AI.md`
+- **Prompt or goal:** Implement the suggestion to reduce writer delays by
+  moving summary sorting outside the read-lock critical section.
+- **AI contribution:** Captured immutable match summaries and start sequence
+  values under the read lock and sorted the detached snapshot after unlocking.
+  Adapted the existing separate comparator to compare immutable snapshot
+  entries, preserving separation from scoreboard orchestration.
+- **Developer decision:** Requested the optimization and clarified that the
+  comparator should remain in its separate class.
+- **Verification:** The focused scoreboard and concurrency tests passed;
+  reviewed the diff and ran `git diff --check`.
+- **Result:** Summary requests no longer hold the read lock during sorting;
+  ordering remains in the dedicated comparator, and snapshot contents are
+  captured consistently.
 
 ### Entry template
 

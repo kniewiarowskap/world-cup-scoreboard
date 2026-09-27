@@ -236,8 +236,9 @@ The in-memory scoreboard is thread-safe within one JVM instance. A fair
 while `startMatch`, `updateScore`, and `finishMatch` take the exclusive write
 lock. The write lock protects compound changes such as checking team
 availability, creating a match, registering its teams, and assigning its start
-sequence. Summary sorting and immutable snapshot creation are performed under
-the read lock so each result reflects consistent state.
+sequence. `getSummary()` captures immutable match snapshots and their start
+sequences under the read lock, then sorts them after releasing it. This keeps
+each result consistent while avoiding holding the lock during sorting.
 
 Fair mode prevents newly arriving readers from continually overtaking a
 queued writer, but it does not interrupt readers that already hold the lock or

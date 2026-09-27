@@ -87,16 +87,22 @@ public final class InMemoryScoreboard implements Scoreboard {
 
     @Override
     public List<MatchSummary> getSummary() {
+        List<MatchStateSummaryComparator.SummaryEntry> snapshot;
         readLock.lock();
         try {
-            return matches.values().stream()
+            snapshot = matches.values().stream()
                     .filter(match -> match.status == MatchStatus.IN_PROGRESS)
-                    .sorted(MatchStateSummaryComparator.INSTANCE)
-                    .map(MatchState::summary)
+                    .map(match -> new MatchStateSummaryComparator.SummaryEntry(
+                            match.summary(), match.startSequence))
                     .toList();
         } finally {
             readLock.unlock();
         }
+
+        return snapshot.stream()
+                .sorted(MatchStateSummaryComparator.INSTANCE)
+                .map(MatchStateSummaryComparator.SummaryEntry::summary)
+                .toList();
     }
 
     private void ensureTeamAvailable(String displayName, String normalizedName) {
